@@ -3,6 +3,7 @@ import type {
     ICacheManager,
     Memory,
     Provider,
+    ProviderResult,
     State,
 } from "@elizaos/core";
 
@@ -210,8 +211,8 @@ export class TonConnectProvider {
                 return await operation();
             } catch (error) {
                 // if user declines, don't retry
-                if (error instanceof UserRejectsError 
-                    || error.code === 300)  { 
+                if (error instanceof UserRejectsError
+                    || error.code === 300)  {
                     throw error;
                 }
                 if (i === retries - 1) throw error;
@@ -362,23 +363,31 @@ export const initTonConnectProvider = async (runtime: IAgentRuntime) => {
 };
 
 export const tonConnectProvider: Provider = {
+    name: "tonConnectProvider",
     async get(
         runtime: IAgentRuntime,
         message: Memory,
-        state?: State
-    ): Promise<ConnectorStatus | string> {
+        state: State
+    ): Promise<ProviderResult> {
 
         // exit if TONCONNECT is not used
         if (!runtime.getSetting(CONFIG_KEYS.TON_MANIFEST_URL)) {
-            return "TONCONNECT is not enabled.";
+            return {
+                text: "TONCONNECT is not enabled."
+            };
         }
 
         try {
             const provider = await initTonConnectProvider(runtime);
-            return provider.formatConnectionStatus(runtime);
+            const data = provider.formatConnectionStatus(runtime);
+            return {
+                data,
+            };
         } catch (error) {
             console.error("TON Connect provider error:", error);
-            return "Unable to connect to TON wallet. Please try again later.";
+            return {
+              text: "Unable to connect to TON wallet. Please try again later.",
+            };
         }
     },
 };

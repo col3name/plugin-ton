@@ -1,4 +1,5 @@
 import { JettonMaster } from "@ton/ton";
+import { SupportedMethod } from "./index.ts";
 
 export type Token = {
   address: string;

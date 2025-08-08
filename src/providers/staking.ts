@@ -1,5 +1,5 @@
 import { Address, fromNano, OpenedContract, SendMode, TonClient } from "@ton/ton";
-import { IAgentRuntime, Provider, Memory, State, elizaLogger } from "@elizaos/core";
+import { IAgentRuntime, Provider, Memory, State, elizaLogger, ProviderResult } from "@elizaos/core";
 import { internal } from "@ton/ton";
 import { initWalletProvider, WalletProvider } from "./wallet";
 import { mnemonicToPrivateKey } from "@ton/crypto";
@@ -141,7 +141,7 @@ export class StakingProvider implements IStakingProvider {
             `Pending Withdraws: ${formatTON(poolInfo.pending_withdraws)} TON`
         ].join('\n');
     }
-    
+
     async getPoolInfo(poolId: string): Promise<PoolInfo> {
         const poolAddress = Address.parse(poolId);
 
@@ -162,21 +162,21 @@ export class StakingProvider implements IStakingProvider {
 
     async getPortfolio(): Promise<string> {
         const walletAddress = Address.parse(this.walletProvider.getAddress());
-    
+
         // Collect all staking positions
         const stakingPositions: { poolAddress: string; amount: string, pending: string }[] = [];
         const stakingPoolAddresses = PlatformFactory.getAllAddresses();
-    
+
         await Promise.all(
             stakingPoolAddresses.map(async poolAddress => {
                 const strategy = PlatformFactory.getStrategy(poolAddress);
                 if (!strategy) return;
-    
+
                 const stakedTon = await strategy.getStakedTon(walletAddress, poolAddress);
                 const pendingWithdrawal = await strategy.getPendingWithdrawal(walletAddress, poolAddress);
 
                 if (!stakedTon && !pendingWithdrawal) return;
-    
+
                 stakingPositions.push({
                     poolAddress: truncateTONAddress(poolAddress),
                     amount: formatTON(stakedTon),
@@ -184,22 +184,22 @@ export class StakingProvider implements IStakingProvider {
                 });
             })
         );
-    
+
         // If no staking positions found
         if (stakingPositions.length === 0) {
             return 'TON Staking Portfolio: No active staking positions found';
         }
-    
+
         // Calculate total staked
         const totalStaked = stakingPositions
             .reduce((sum, pos) => sum + parseFloat(pos.amount), 0)
             .toFixed(2);
-    
+
         // Format the output
         const positions = stakingPositions
             .map(pos => `Pool ${pos.poolAddress}: Amount:${pos.amount} TON, Pending Withdrawal: ${pos.pending} TON`)
             .join('\n');
-    
+
         return [
             'TON Staking Portfolio',
             '───────────────────',
@@ -208,7 +208,7 @@ export class StakingProvider implements IStakingProvider {
             `Total Staked: ${totalStaked} TON`
         ].join('\n');
     }
-    
+
 }
 
 // Initializes the staking provider using settings from the runtime.
@@ -250,24 +250,29 @@ export const initStakingProvider = async (
  *   }
  */
 export const nativeStakingProvider: Provider = {
+    name: "nativeStakingProvider",
     async get(
         runtime: IAgentRuntime,
         message: Memory,
-        state?: State,
-    ): Promise<string | null> {
+        state: State,
+    ): Promise<ProviderResult> {
         try {
             const stakingProvider = await initStakingProvider(runtime);
 
             const stakingPortfolio = await stakingProvider.getPortfolio();
-            
+
             const poolAddresses = await PlatformFactory.getAllAddresses();
 
-            const providerString = `Portfolio: ${stakingPortfolio}\n Available Staking Pool Addresses: [ ${poolAddresses.map(e=>e.toString()).join(' | ')} ]`
-            console.info(providerString)
-            return providerString;
+            const providerString = `Portfolio: ${stakingPortfolio}\n Available Staking Pool Addresses: [ ${poolAddresses.map(e=>e.toString()).join(' | ')} ]`;
+            console.info(providerString);
+            return {
+                text: providerString,
+            };
         } catch (error) {
             console.error("Error in staking provider:", error);
-            return null;
+            return {
+                text: undefined,
+            };
         }
     },
 };

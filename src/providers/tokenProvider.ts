@@ -4,6 +4,7 @@ import type {
   Memory,
   State,
   Content,
+  ProviderResult,
 } from "@elizaos/core";
 
 import { gunzip } from "zlib";
@@ -31,6 +32,8 @@ export class TonTokenPriceProvider implements Provider {
     this.initializeTokenCache();
     this.initializePoolCache();
   }
+
+  name = "TonTokenPriceProvider";
 
   private async initializeTokenCache(): Promise<void> {
     try {
@@ -102,8 +105,8 @@ export class TonTokenPriceProvider implements Provider {
   async get(
     _runtime: IAgentRuntime,
     message: Memory,
-    _state?: State
-  ): Promise<string> {
+    _state: State
+  ): Promise<ProviderResult> {
     try {
       const content =
         typeof message.content === "string"
@@ -126,7 +129,9 @@ export class TonTokenPriceProvider implements Provider {
         const poolAddress = await this.getPoolAddress(pairIdentifier);
         const pairData = await this.fetchPairPrice(poolAddress);
 
-        return this.formatPairPriceData(pairIdentifier, pairData);
+        return {
+          text: this.formatPairPriceData(pairIdentifier, pairData)
+        };
       } else if (tokenIdentifier) {
         // Fetch token price
         const isAddress = /^EQ[a-zA-Z0-9_-]{48}$/.test(tokenIdentifier);
@@ -145,13 +150,19 @@ export class TonTokenPriceProvider implements Provider {
         }
 
         const tokenData = await this.fetchTokenPrice(tokenAddress);
-        return this.formatTokenPriceData(tokenName, tokenAddress, tokenData);
+        return {
+          text: this.formatTokenPriceData(tokenName, tokenAddress, tokenData)
+        };
       } else {
-        return "No token or pair identifier found in the message.";
+        return {
+          text: "No token or pair identifier found in the message."
+        };
       }
     } catch (error) {
       console.error("TonTokenPriceProvider error:", error);
-      return `Error: ${error.message}`;
+      return {
+        text: `Error: ${error?.message || ''}`
+      };
     }
   }
 

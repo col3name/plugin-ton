@@ -3,6 +3,7 @@ import type {
     ICacheManager,
     Memory,
     Provider,
+    ProviderResult,
     State,
 } from "@elizaos/core";
 
@@ -399,25 +400,25 @@ export const initWalletProvider = async (runtime: IAgentRuntime) => {
 };
 
 export const nativeWalletProvider: Provider = {
-    async get(
-        runtime: IAgentRuntime,
-        // eslint-disable-next-line
-        _message: Memory,
-        // eslint-disable-next-line
-        _state?: State,
-    ): Promise<string | null> {
+    name: "nativeWalletProvider",
+
+    async get(runtime: IAgentRuntime, message: Memory, state: State): Promise<ProviderResult> {
         try {
             const walletProvider = await initWalletProvider(runtime);
             const formattedPortfolio =
-                await walletProvider.getFormattedPortfolio(runtime);
+              await walletProvider.getFormattedPortfolio(runtime);
             console.log(formattedPortfolio);
-            return formattedPortfolio;
+            return {
+                text: formattedPortfolio
+            };
         } catch (error) {
             console.error(
-                `Error in ${PROVIDER_CONFIG.CHAIN_NAME_IN_DEXSCREENER.toUpperCase()} wallet provider:`,
-                error,
+              `Error in ${PROVIDER_CONFIG.CHAIN_NAME_IN_DEXSCREENER.toUpperCase()} wallet provider:`,
+              error,
             );
-            return null;
+            return {
+                text: undefined
+            };
         }
     },
 };
