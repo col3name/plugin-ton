@@ -4,7 +4,6 @@ import {
     type IAgentRuntime,
     type Memory,
     type State,
-    generateText,
 } from "@elizaos/core";
 
 export async function replaceLastMemory(
@@ -22,10 +21,9 @@ export async function replaceLastMemory(
         template
     });
 
-    const response = await generateText({
+    const response = await runtime.useModel(ModelClass.TEXT_SMALL, {
         runtime: runtime,
         context: responseContext,
-        modelClass: ModelClass.SMALL,
     });
 
 
@@ -56,10 +54,9 @@ export async function addMemory(
         template
     });
 
-    const response = await generateText({
+    const response = await runtime.useModel(ModelType.TEXT_SMALL, {
         runtime: runtime,
         context: responseContext,
-        modelClass: ModelClass.SMALL,
     });
 
     const newMemory = await runtime.messageManager.addEmbeddingToMemory( {

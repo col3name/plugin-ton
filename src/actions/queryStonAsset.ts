@@ -10,7 +10,6 @@ import {
     type State,
     ActionExample,
     Action,
-    generateText
 } from "@elizaos/core";
 import { z } from "zod";
 import {
@@ -149,10 +148,9 @@ export default {
                 state,
                 template
             });
-            const response = await generateText({
+            const response = await runtime.useModel(ModelClass.TEXT_SMALL, {
                 runtime: runtime,
                 context: responseContext,
-                modelClass: ModelClass.TEXT_SMALL,
             });
 
             callback?.({
@@ -184,18 +182,16 @@ export default {
                 state,
                 template
             });
-
-            const response = await generateText({
+            const response = await runtime.useModel(ModelClass.TEXT_SMALL, {
                 runtime: runtime,
                 context: responseContext,
-                modelClass: ModelClass.TEXT_SMALL,
             });
 
             await callback?.({
                 text: response,
                 error: {
-                    message: error.message,
-                    statusCode: error.response?.status,
+                    message: error?.message,
+                    statusCode: error?.response?.status,
                 }
             });
 
