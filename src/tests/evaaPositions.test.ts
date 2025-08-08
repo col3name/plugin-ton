@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach, beforeAll, afterEach } from "vitest";
-import { generateObject } from '@elizaos/core';
 import { defaultCharacter } from "@elizaos/core";
 import { KeyPair, mnemonicNew, mnemonicToPrivateKey } from "@ton/crypto";
 import { WalletProvider } from "../providers/wallet";
@@ -38,27 +37,27 @@ vi.mock('@evaafi/sdk', async (importOriginal) => {
     const TON_TESTNET = { assetId: 1n };
     const JUSDC_TESTNET = { assetId: 2n };
     const JUSDT_TESTNET = { assetId: 3n };
-    
+
     // Mock asset data
     const mockAssetsData = new Map([
-        [TON_TESTNET.assetId, { 
-            symbol: "TON", 
+        [TON_TESTNET.assetId, {
+            symbol: "TON",
             decimals: 9,
             sRate: 1000000000n,
             bRate: 1000000000n,
             totalSupply: 1000000000n,
             totalBorrow: 500000000n
         }],
-        [JUSDT_TESTNET.assetId, { 
-            symbol: "USDT", 
+        [JUSDT_TESTNET.assetId, {
+            symbol: "USDT",
             decimals: 6,
             sRate: 1000000000n,
             bRate: 1000000000n,
             totalSupply: 1000000000n,
             totalBorrow: 500000000n
         }],
-        [JUSDC_TESTNET.assetId, { 
-            symbol: "USDC", 
+        [JUSDC_TESTNET.assetId, {
+            symbol: "USDC",
             decimals: 6,
             sRate: 1000000000n,
             bRate: 1000000000n,
@@ -66,29 +65,29 @@ vi.mock('@evaafi/sdk', async (importOriginal) => {
             totalBorrow: 500000000n
         }]
     ]);
-    
+
     // Mock asset config
     const mockAssetsConfig = new Map([
-        [TON_TESTNET.assetId, { 
+        [TON_TESTNET.assetId, {
             baseBorrowRate: 1000000000n,
             borrowRateSlopeLow: 1000000000n,
             borrowRateSlopeHigh: 1000000000n,
             targetUtilization: 800000000n
         }],
-        [JUSDT_TESTNET.assetId, { 
+        [JUSDT_TESTNET.assetId, {
             baseBorrowRate: 1000000000n,
             borrowRateSlopeLow: 1000000000n,
             borrowRateSlopeHigh: 1000000000n,
             targetUtilization: 800000000n
         }],
-        [JUSDC_TESTNET.assetId, { 
+        [JUSDC_TESTNET.assetId, {
             baseBorrowRate: 1000000000n,
             borrowRateSlopeLow: 1000000000n,
             borrowRateSlopeHigh: 1000000000n,
             targetUtilization: 800000000n
         }]
     ]);
-    
+
     // Mock user data with both supply and borrow positions
     const mockUserData = {
         type: "active",
@@ -103,13 +102,13 @@ vi.mock('@evaafi/sdk', async (importOriginal) => {
         get: vi.fn(),
         getSync: vi.fn()
     };
-    
+
     // Mock user contract
     const mockUserContract = {
         data: mockUserData,
         getSync: vi.fn()
     };
-    
+
     // Mock prices data
     const mockPrices = {
         dict: new Map([
@@ -118,9 +117,9 @@ vi.mock('@evaafi/sdk', async (importOriginal) => {
             [JUSDC_TESTNET.assetId, 1000000000n]  // $1.00
         ])
     };
-    
+
     // This mockAssetsData is already defined above, so we'll use that one
-    
+
     const mockEvaa = vi.fn().mockImplementation(() => ({
         getSync: vi.fn().mockResolvedValue(true),
         data: {
@@ -134,11 +133,11 @@ vi.mock('@evaafi/sdk', async (importOriginal) => {
         },
         openUserContract: vi.fn().mockResolvedValue(mockUserContract)
     }));
-    
+
     const mockPricesCollector = vi.fn().mockImplementation(() => ({
         getPrices: vi.fn().mockResolvedValue(mockPrices)
     }));
-    
+
     return {
         default: {
             Evaa: mockEvaa,
@@ -218,10 +217,10 @@ describe("EVAA Positions Action", () => {
         const mnemonics: string[] = await mnemonicNew(12, password);
         keypair = await mnemonicToPrivateKey(mnemonics, password);
         walletProvider = new WalletProvider(keypair, testnet, mockCacheManager);
-        
+
         // Mock the wallet client method
         vi.spyOn(walletProvider, 'getWalletClient').mockReturnValue(mockWalletClient);
-        
+
         positionsAction = new PositionsAction(walletProvider);
         mockedRuntime = {
             character: defaultCharacter,
@@ -243,10 +242,10 @@ describe("EVAA Positions Action", () => {
 
     it("should successfully fetch positions and invoke callback with positions data", async () => {
         const callback = vi.fn();
-        
+
         // Mock the implementation to directly call the callback
         const mockPositions = [{ assetId: "TON", principal: "100.00" }];
-        
+
         // Mock the implementation of getPositions
         vi.spyOn(positionsAction, 'getPositions').mockImplementationOnce(async (_runtime, cb) => {
             cb({
@@ -273,7 +272,7 @@ describe("EVAA Positions Action", () => {
 
     it("should handle errors during position fetching and invoke callback with error", async () => {
         const callback = vi.fn();
-        
+
         // Mock the implementation of getPositions to simulate an error
         vi.spyOn(positionsAction, 'getPositions').mockImplementationOnce(async (_runtime, cb) => {
             cb({
@@ -293,14 +292,14 @@ describe("EVAA Positions Action", () => {
 
     it("should correctly format position data with health factor", async () => {
         const callback = vi.fn();
-        
+
         // Mock the implementation to directly call the callback
-        const mockPositions = [{ 
-            assetId: "TON", 
+        const mockPositions = [{
+            assetId: "TON",
             principal: "100.00",
-            healthFactor: "1.25" 
+            healthFactor: "1.25"
         }];
-        
+
         // Mock the implementation of getPositions
         vi.spyOn(positionsAction, 'getPositions').mockImplementationOnce(async (_runtime, cb) => {
             cb({
@@ -328,13 +327,13 @@ describe("EVAA Positions Action", () => {
 
     it("should correctly identify supply and borrow positions", async () => {
         const callback = vi.fn();
-        
+
         // Mock the implementation to directly call the callback
         const mockPositions = [
             { assetId: "TON", principal: "100.00" },  // Supply position (positive)
             { assetId: "USDT", principal: "-50.00" }   // Borrow position (negative)
         ];
-        
+
         // Mock the implementation of getPositions
         vi.spyOn(positionsAction, 'getPositions').mockImplementationOnce(async (_runtime, cb) => {
             cb({
@@ -347,13 +346,13 @@ describe("EVAA Positions Action", () => {
         });
 
         await positionsAction.getPositions(mockedRuntime, callback);
-        
+
         // Verify callback was called
         expect(callback).toHaveBeenCalled();
-        
+
         // Get the positions from the callback
         const callbackArg = callback.mock.calls[0][0];
-        
+
         // Verify we have positions in the callback result
         expect(callbackArg.positions).toBeDefined();
         expect(callbackArg.positions.length).toBeGreaterThan(0);
