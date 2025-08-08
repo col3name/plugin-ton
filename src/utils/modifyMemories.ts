@@ -28,7 +28,7 @@ export async function replaceLastMemory(
 
 
     const newMemory = await runtime.messageManager.addEmbeddingToMemory({
-        userId: memory.userId,
+        entityId: memory.entityId,
         agentId: memory.agentId,
         roomId: memory.roomId,
         content: {
@@ -54,13 +54,13 @@ export async function addMemory(
         template
     });
 
-    const response = await runtime.useModel(ModelType.TEXT_SMALL, {
+    const response = await runtime.useModel(ModelClass.TEXT_SMALL, {
         runtime: runtime,
         context: responseContext,
     });
 
     const newMemory = await runtime.messageManager.addEmbeddingToMemory( {
-        userId: memory.userId,
+        entityId: memory.entityId,
         agentId: memory.agentId,
         roomId: memory.roomId,
         content: {
