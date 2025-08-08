@@ -62,9 +62,7 @@ export async function buildCreateWalletDetails(
     schema: passwordSchema,
   });
 
-  const content = await parseKeyValueXml(result);
-
-  let passwordData = content?.object;
+  let passwordData = await parseKeyValueXml(result);
   if (!passwordData) {
     // If the generated object is undefined, cast the result to ensure password extraction.
     passwordData = result as unknown as { password: string };

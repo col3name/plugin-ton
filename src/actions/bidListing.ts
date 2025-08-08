@@ -77,7 +77,7 @@ Respond with an XML block containing only the extracted values. Use key-value pa
       schema: bidAuctionSchema as any,
     });
     const content = parseKeyValueXml(result);
-    return content?.object as any;
+    return content as any;
   };
 
   /**

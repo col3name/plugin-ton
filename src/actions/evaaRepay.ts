@@ -406,7 +406,7 @@ const repayAction: Action = {
             });
             const content = await parseKeyValueXml(result);
 
-            const repayDetails = content?.object as RepayContent;
+            const repayDetails = content as RepayContent;
             elizaLogger.debug(`Repay details: ${JSON.stringify(content?.object)}`);
 
             if (!isRepayContent(repayDetails)) {

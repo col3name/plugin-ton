@@ -417,7 +417,7 @@ const withdrawAction: Action = {
             });
             const content = await parseKeyValueXml(result);
 
-            const withdrawDetails = content?.object as WithdrawContent;
+            const withdrawDetails = content as WithdrawContent;
             elizaLogger.debug(`Withdraw details: ${JSON.stringify(content?.object)}`);
 
             if (!isWithdrawContent(withdrawDetails)) {

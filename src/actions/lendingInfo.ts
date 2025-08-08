@@ -192,7 +192,7 @@ const buildGetLendingInfo = async (
     });
     const content = await parseKeyValueXml(result);
     let getLendingInfoContent: LendingInfoContent =
-        content?.object as LendingInfoContent;
+        content as LendingInfoContent;
 
     if (getLendingInfoContent === undefined) {
         getLendingInfoContent = content as unknown as LendingInfoContent;

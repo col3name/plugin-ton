@@ -157,7 +157,7 @@ const buildTransferDetails = async (
     });
     const content = await parseKeyValueXml(result);
 
-    let transferContent: TransferContent = content?.object as TransferContent;
+    let transferContent: TransferContent = content as TransferContent;
 
     if (transferContent === undefined) {
         transferContent = content as unknown as TransferContent;

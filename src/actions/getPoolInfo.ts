@@ -78,7 +78,7 @@ const buildPoolInfoDetails = async (
     });
     const content = await parseKeyValueXml(result);
 
-    return content?.object as PoolInfoContent;
+    return content as PoolInfoContent;
 };
 
 export default {

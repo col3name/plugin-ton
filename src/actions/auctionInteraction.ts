@@ -197,7 +197,7 @@ const buildAuctionInteractionData = async (
     schema: auctionInteractionSchema as any,
   });
   const content = parseKeyValueXml(result);
-  return content?.object as any;
+  return content as any;
 };
 
 /**

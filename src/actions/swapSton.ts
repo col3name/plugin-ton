@@ -276,7 +276,7 @@ const buildSwapDetails = async (
     });
     const content = await parseKeyValueXml(result);
 
-    let swapContent: ISwapContent = content?.object as ISwapContent;
+    let swapContent: ISwapContent = content as ISwapContent;
 
     if (swapContent === undefined) {
         swapContent = content as unknown as ISwapContent;

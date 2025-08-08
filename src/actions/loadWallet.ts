@@ -64,7 +64,7 @@ export async function buildRecoverWalletDetails(
   });
    const content = await parseKeyValueXml(result);
 
-  let passwordData = content?.object;
+  let passwordData = content;
   if (!passwordData) {
     // If the generated object is undefined, cast the result to ensure password extraction.
     passwordData = content as unknown as { password: string };

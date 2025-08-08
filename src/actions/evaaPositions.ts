@@ -502,7 +502,7 @@ const positionsAction: Action = {
             });
             const content = await parseKeyValueXml(result);
 
-            const positionsDetails = content?.object as PositionsContent;
+            const positionsDetails = content as PositionsContent;
             elizaLogger.debug(`Positions details: ${JSON.stringify(content?.object)}`);
 
             // Validate the positions object

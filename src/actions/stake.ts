@@ -95,7 +95,7 @@ const buildStakeDetails = async (
     });
     const content = await parseKeyValueXml(result);
 
-    return content?.object as StakeContent;
+    return content as StakeContent;
 };
 
 export default {

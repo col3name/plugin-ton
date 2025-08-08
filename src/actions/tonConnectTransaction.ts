@@ -154,7 +154,7 @@ const buildTonConnectSendTransactionDetails = async (
     });
 
     const content = await parseKeyValueXml(result);
-    return content?.object as TonConnectSendTransactionContent;
+    return content as TonConnectSendTransactionContent;
 };
 
 export default {

@@ -454,7 +454,7 @@ import {
       });
       const content = await parseKeyValueXml(result);
 
-      let batchTransferContent: BatchTransferContent = content?.object as BatchTransferContent;
+      let batchTransferContent: BatchTransferContent = content as BatchTransferContent;
 
       if (batchTransferContent === undefined) {
           batchTransferContent = content as unknown as BatchTransferContent;

@@ -98,7 +98,7 @@ const buildCreateAuctionData = async (
   });
   const content = await parseKeyValueXml(result);
 
-  return content?.object as any;
+  return content as any;
 };
 
 /**

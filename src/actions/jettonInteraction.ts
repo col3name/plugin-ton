@@ -152,8 +152,8 @@ const buildJettonInteractionData = async (
     });
     const content = await parseKeyValueXml(result);
 
-    elizaLogger.debug("Generated jetton interaction content", content?.object);
-    return content?.object as any;
+    elizaLogger.debug("Generated jetton interaction content", content);
+    return content as any;
   } catch (error) {
     elizaLogger.error("Error generating jetton interaction content", error);
     throw new Error(`Failed to extract jetton interaction parameters: ${error}`);

@@ -192,7 +192,7 @@ const buildGetCollectionData = async (
   });
   const content = await parseKeyValueXml(result);
 
-  let buildGetCollectionDataContent: GetCollectionDataContent = content?.object as GetCollectionDataContent;
+  let buildGetCollectionDataContent: GetCollectionDataContent = content as GetCollectionDataContent;
 
   if (buildGetCollectionDataContent === undefined) {
     buildGetCollectionDataContent = content as unknown as GetCollectionDataContent;

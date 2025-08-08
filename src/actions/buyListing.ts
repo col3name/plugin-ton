@@ -71,7 +71,7 @@ const buildBuyListingData = async (
     schema: buyListingSchema as any,
   });
   const content = parseKeyValueXml(result);
-  return content?.object as any;
+  return content as any;
 };
 
 /**

@@ -164,7 +164,7 @@ const buildTransferNFTContent = async (
     });
     const content = await parseKeyValueXml(result);
 
-    let transferContent: TransferNFTContent = content?.object as TransferNFTContent;
+    let transferContent: TransferNFTContent = content as TransferNFTContent;
 
     if (transferContent === undefined) {
         transferContent = content as unknown as TransferNFTContent;

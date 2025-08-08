@@ -496,7 +496,7 @@ const borrowAction: Action = {
             });
             const content = await parseKeyValueXml(result);
 
-            const borrowDetails = content?.object as BorrowContent;
+            const borrowDetails = content as BorrowContent;
             elizaLogger.debug(`Borrow details: ${JSON.stringify(content?.object)}`);
 
             if (!isBorrowContent(borrowDetails)) {

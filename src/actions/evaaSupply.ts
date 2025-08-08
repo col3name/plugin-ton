@@ -499,7 +499,7 @@ const supplyAction: Action = {
             });
             const content = await parseKeyValueXml(result);
 
-            const supplyDetails = content?.object as SupplyContent;
+            const supplyDetails = content as SupplyContent;
             elizaLogger.debug(`Supply details: ${JSON.stringify(content?.object)}`);
 
             if (!isSupplyContent(supplyDetails)) {

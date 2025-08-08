@@ -88,7 +88,7 @@ const buildUnstakeDetails = async (
     });
     const content = await parseKeyValueXml(result);
 
-    return content?.object as UnstakeContent;
+    return content as UnstakeContent;
 };
 
 export default {

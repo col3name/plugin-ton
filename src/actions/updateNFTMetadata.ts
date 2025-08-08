@@ -132,7 +132,7 @@ const buildUpdateDetails = async (
   });
   const content = await parseKeyValueXml(result);
 
-  return content?.object as UpdateNFTMetadataContent;
+  return content as UpdateNFTMetadataContent;
 };
 
 /**

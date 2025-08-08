@@ -193,7 +193,7 @@ const buildMintDetails = async (
 
     const content = await parseKeyValueXml(result);
 
-    let mintContent: MintContent = content?.object as MintContent;
+    let mintContent: MintContent = content as MintContent;
     if (mintContent === undefined) {
       mintContent = content as unknown as MintContent;
     }

@@ -383,7 +383,7 @@ const buildDexActionDetails = async (
 
   const content = await parseKeyValueXml(result);
 
-  return content?.object as DexActionContent;
+  return content as DexActionContent;
 };
 
 export default {

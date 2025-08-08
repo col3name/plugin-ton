@@ -82,7 +82,7 @@ const buildQueryAssetDetails = async (
 
     const content = await parseKeyValueXml(result);
 
-    let queryAssetContent: IQueryAssetContent = content?.object as IQueryAssetContent;
+    let queryAssetContent: IQueryAssetContent = content as IQueryAssetContent;
 
     if (queryAssetContent === undefined) {
         queryAssetContent = content as unknown as IQueryAssetContent;
