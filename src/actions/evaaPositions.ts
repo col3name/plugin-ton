@@ -5,10 +5,10 @@ import {
     IAgentRuntime,
     Memory,
     State,
-    generateObject,
-    composeContext,
-    ModelClass,
-    generateObjectArray
+    composePromptFromState,
+    parseKeyValueXml,
+    ModelType as ModelClass,
+    // generateObjectArray
 } from '@elizaos/core';
 import { Dictionary, fromNano } from '@ton/ton';
 import BigNumber from "bignumber.js";
@@ -281,19 +281,19 @@ export class PositionsAction {
             // Calculate borrow interest - ensure all values are BigInt and handle potential undefined values
             try {
                 // Only calculate if all required values are available
-                if (this.TON?.config?.baseBorrowRate && this.masterConstants?.FACTOR_SCALE && 
+                if (this.TON?.config?.baseBorrowRate && this.masterConstants?.FACTOR_SCALE &&
                     this.TON?.config?.borrowRateSlopeLow && this.TON?.config?.targetUtilization &&
                     this.TON?.config?.borrowRateSlopeHigh) {
-                    
+
                     const baseBorrowRate = BigInt(this.TON.config.baseBorrowRate);
                     const factorScale = BigInt(this.masterConstants.FACTOR_SCALE);
                     const slopeLow = BigInt(this.TON.config.borrowRateSlopeLow);
                     const slopeHigh = BigInt(this.TON.config.borrowRateSlopeHigh);
                     const targetUtil = BigInt(this.TON.config.targetUtilization);
-                    
+
                     const term1 = mulFactor(factorScale, slopeLow, targetUtil);
                     const term2 = mulFactor(factorScale, slopeHigh, factorScale - targetUtil);
-                    
+
                     this.borrowInterest = baseBorrowRate + BigInt(term1 || 0n) + BigInt(term2 || 0n);
                 } else {
                     // Default value if data is missing
@@ -390,13 +390,13 @@ export class PositionsAction {
             // Ensure all values are BigInt to prevent type mixing errors
             let dailyBorrowInterestFP = 0n;
             let dailySupplyInterestFP = 0n;
-            
+
             try {
                 const borrowPrincipalBigInt = typeof borrowPrincipal === 'bigint' ? borrowPrincipal : BigInt(borrowPrincipal || 0);
                 const supplyPrincipalBigInt = typeof supplyPrincipal === 'bigint' ? supplyPrincipal : BigInt(supplyPrincipal || 0);
                 const dailyRateFPBigInt = typeof dailyRateFP === 'bigint' ? dailyRateFP : BigInt(dailyRateFP || 0);
                 const ONEBigInt = typeof ONE === 'bigint' ? ONE : BigInt(ONE || 10n ** 13n);
-                
+
                 dailyBorrowInterestFP = (borrowPrincipalBigInt * dailyRateFPBigInt) / ONEBigInt;
                 dailySupplyInterestFP = (supplyPrincipalBigInt * dailyRateFPBigInt) / ONEBigInt;
             } catch (error) {
@@ -492,20 +492,20 @@ const positionsAction: Action = {
 
         try {
             // Compose context to extract borrowing parameters
-            const positionsContext = composeContext({
+            const positionsContext = composePromptFromState({
                 state,
                 template: positionsTemplate
             });
 
-            const content = await generateObject({
+            const result = await runtime.useModel(ModelClass.LARGE, {
                 runtime,
                 context: positionsContext,
                 schema: positionsSchema,
-                modelClass: ModelClass.LARGE,
             });
+            const content = await parseKeyValueXml(result);
 
-            const positionsDetails = content.object as PositionsContent;
-            elizaLogger.debug(`Positions details: ${JSON.stringify(content.object)}`);
+            const positionsDetails = content?.object as PositionsContent;
+            elizaLogger.debug(`Positions details: ${JSON.stringify(content?.object)}`);
 
             // Validate the positions object
             if (!isPositionsContent(positionsDetails)) {

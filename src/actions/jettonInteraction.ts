@@ -1,8 +1,8 @@
 import {
   elizaLogger,
-  composeContext,
-  generateObject,
-  ModelClass,
+  composePromptFromState,
+  parseKeyValueXml,
+  ModelType as ModelClass,
   type IAgentRuntime,
   type Memory,
   type State,
@@ -123,7 +123,7 @@ const buildJettonInteractionData = async (
   state: State
 ): Promise<JettonInteractionContent> => {
   elizaLogger.debug("Building jetton interaction data from message content");
-  
+
   // If the content already has the required structure, validate and return it
   if (isJettonInteractionContent(message.content)) {
     elizaLogger.debug("Message content already has jetton interaction structure");
@@ -136,24 +136,24 @@ const buildJettonInteractionData = async (
       throw new Error(`Invalid jetton interaction content: ${error}`);
     }
   }
-  
+
   // Otherwise, use the LLM to extract the parameters
   elizaLogger.debug("Extracting jetton interaction parameters using LLM");
-  const context = composeContext({
+  const context = composePromptFromState({
     state,
     template: jettonInteractionTemplate,
   });
-  
+
   try {
-    const content = await generateObject({
+    const result = await runtime.useModel(ModelClass.SMALL, {
       runtime,
       context,
       schema: jettonInteractionSchema as any,
-      modelClass: ModelClass.SMALL,
     });
-    
-    elizaLogger.debug("Generated jetton interaction content", content.object);
-    return content.object as any;
+    const content = await parseKeyValueXml(result);
+
+    elizaLogger.debug("Generated jetton interaction content", content?.object);
+    return content?.object as any;
   } catch (error) {
     elizaLogger.error("Error generating jetton interaction content", error);
     throw new Error(`Failed to extract jetton interaction parameters: ${error}`);
@@ -199,7 +199,7 @@ export class JettonInteractionAction {
       // Deploy the minter contract
       const ownerAddress = Address.parse(owner);
       elizaLogger.debug(`Parsed owner address: ${ownerAddress.toString()}`);
-      
+
       elizaLogger.debug("Starting deployment...");
       const jettonMinterAddress = await JettonMinter.deploy(
         this.walletProvider,
@@ -242,13 +242,13 @@ export class JettonInteractionAction {
     try {
       const minterAddress = Address.parse(jettonMinterAddress);
       elizaLogger.debug(`Parsed minter address: ${minterAddress.toString()}`);
-      
+
       const jettonMinter = JettonMinter.createFromAddress(minterAddress);
       elizaLogger.debug(`Created JettonMinter instance`);
-      
+
       const recipient = Address.parse(recipientAddress);
       elizaLogger.debug(`Parsed recipient address: ${recipient.toString()}`);
-      
+
       const jettonAmount = BigInt(amount);
       elizaLogger.debug(`Parsed jetton amount: ${jettonAmount.toString()}`);
 
@@ -260,7 +260,7 @@ export class JettonInteractionAction {
         jettonAmount
       );
       elizaLogger.debug("Mint operation completed");
-      
+
       return {
         success: true,
         recipientWalletAddress: recipientAddress.toString(),
@@ -292,13 +292,13 @@ export class JettonInteractionAction {
     try {
       const minterAddress = Address.parse(jettonMinterAddress);
       elizaLogger.debug(`Parsed minter address: ${minterAddress.toString()}`);
-      
+
       const jettonMinter = JettonMinter.createFromAddress(minterAddress);
       elizaLogger.debug(`Created JettonMinter instance`);
-      
+
       const jettonAmount = BigInt(amount);
       elizaLogger.debug(`Parsed jetton amount: ${jettonAmount.toString()}`);
-      
+
       const recipient = recipientAddress ? Address.parse(recipientAddress) : null;
       elizaLogger.debug(`Recipient address: ${recipient?.toString() || 'null'}`);
 
@@ -342,15 +342,15 @@ export class JettonInteractionAction {
     try {
     const client = this.walletProvider.getWalletClient();
     const jettonMaster = client.open(JettonMaster.create(Address.parse(jettonMasterAddress || "EQBlqsm144Dq6SjbPI4jjZvA1hqTIP3CvHovbIfW_t-SCALE")));
-    
+
     const userJettonWalletAddress = await jettonMaster.getWalletAddress(this.walletProvider.wallet.address);
-    
+
       const jettonWallet: JettonWallet = JettonWallet.createFromAddress(userJettonWalletAddress);
       elizaLogger.debug(`Created JettonWallet instance`);
 
       const recipient = Address.parse(recipientAddress);
       elizaLogger.debug(`Parsed recipient address: ${recipient.toString()}`);
-      
+
       const jettonAmount = BigInt(amount);
       elizaLogger.debug(`Parsed jetton amount: ${jettonAmount.toString()}`);
 
@@ -361,7 +361,7 @@ export class JettonInteractionAction {
         jettonAmount
       );
       elizaLogger.debug("Transfer operation completed");
-      
+
       return {
         success: true,
         amount: amount,
@@ -388,10 +388,10 @@ export class JettonInteractionAction {
     try {
       const minterAddress = Address.parse(jettonMinterAddress);
       elizaLogger.debug(`Parsed minter address: ${minterAddress.toString()}`);
-      
+
       const jettonMinter = JettonMinter.createFromAddress(minterAddress);
       elizaLogger.debug(`Created JettonMinter instance`);
-      
+
       // Get jetton data
       elizaLogger.debug("Retrieving jetton data...");
       const jettonData = await jettonMinter.getJettonData(
@@ -401,7 +401,7 @@ export class JettonInteractionAction {
         totalSupply: jettonData.totalSupply.toString(),
         adminAddress: jettonData.adminAddress.toString()
       });
-      
+
       // Parse metadata from content cell
       elizaLogger.debug("Parsing token metadata...");
       const metadata = parseTokenMetadataCell(jettonData.content);
@@ -435,10 +435,10 @@ export class JettonInteractionAction {
     try {
       const walletAddress = Address.parse(jettonWalletAddress);
       elizaLogger.debug(`Parsed wallet address: ${walletAddress.toString()}`);
-      
+
       const jettonWallet = JettonWallet.createFromAddress(walletAddress);
       elizaLogger.debug(`Created JettonWallet instance`);
-      
+
       // Get wallet data
       elizaLogger.debug("Retrieving wallet data...");
       const walletData = await jettonWallet.getWalletData(
@@ -481,10 +481,10 @@ export class JettonInteractionAction {
     try {
       const minterAddress = Address.parse(jettonMinterAddress);
       elizaLogger.debug(`Parsed minter address: ${minterAddress.toString()}`);
-      
+
       const jettonMinter = JettonMinter.createFromAddress(minterAddress);
       elizaLogger.debug(`Created JettonMinter instance`);
-      
+
       const newOwner = Address.parse(newOwnerAddress);
       elizaLogger.debug(`Parsed new owner address: ${newOwner.toString()}`);
 
@@ -523,7 +523,7 @@ const handler = async (
   callback?: HandlerCallback
 ) => {
   elizaLogger.log("Starting INTERACT_JETTON handler...");
-  
+
   try {
     const params: JettonInteractionContent = await buildJettonInteractionData(runtime, message, state);
     elizaLogger.debug("Jetton interaction parameters extracted", params);
@@ -531,7 +531,7 @@ const handler = async (
     if (!isJettonInteractionContent(params)) {
       const errorMessage = "Unable to process jetton interaction request. Invalid content provided.";
       elizaLogger.error(errorMessage);
-      
+
       if (callback) {
         callback({
           text: errorMessage,
@@ -540,17 +540,17 @@ const handler = async (
       }
       return false;
     }
-    
+
     elizaLogger.debug("Initializing wallet provider...");
     const walletProvider = await initWalletProvider(runtime);
     elizaLogger.debug("Wallet provider initialized");
-    
+
     const jettonInteraction = new JettonInteractionAction(walletProvider);
     elizaLogger.debug("JettonInteractionAction instance created");
 
     let result;
     elizaLogger.debug(`Processing jetton action: ${params.jettonAction}`);
-    
+
     switch (params.jettonAction) {
       case "deployMinter":
         if (!params.metadata) {
@@ -562,7 +562,7 @@ const handler = async (
           params.metadata
         );
         break;
-        
+
       case "mint":
         if (!params.jettonMinterAddress || !params.amount) {
           throw new Error("Missing required fields for mint action");
@@ -574,7 +574,7 @@ const handler = async (
           params.recipientAddress? params.recipientAddress : null
         );
         break;
-        
+
       case "burn":
         if (!params.jettonMinterAddress || !params.amount) {
           throw new Error("Missing required fields for burn action");
@@ -586,7 +586,7 @@ const handler = async (
           params.recipientAddress? params.recipientAddress : null
         );
         break;
-        
+
       case "transfer":
         if (!params.jettonWalletAddress || !params.amount || !params.recipientAddress || !params.jettonMasterAddress) {
           throw new Error("Missing required fields for transfer action");
@@ -598,7 +598,7 @@ const handler = async (
           params.jettonMasterAddress as string
         );
         break;
-        
+
       case "getJettonData":
         if (!params.jettonMinterAddress) {
           throw new Error("Jetton minter address is required for getJettonData action");
@@ -606,7 +606,7 @@ const handler = async (
         elizaLogger.debug("Executing getJettonData action");
         result = await jettonInteraction.getJettonData(params.jettonMinterAddress);
         break;
-        
+
       case "getWalletData":
         if (!params.jettonWalletAddress) {
           throw new Error("Jetton wallet address is required for getWalletData action");
@@ -614,7 +614,7 @@ const handler = async (
         elizaLogger.debug("Executing getWalletData action");
         result = await jettonInteraction.getWalletData(params.jettonWalletAddress);
         break;
-        
+
       case "changeOwner":
         if (!params.jettonMinterAddress || !params.newOwnerAddress) {
           throw new Error("Missing required fields for changeOwner action");
@@ -625,38 +625,38 @@ const handler = async (
           params.newOwnerAddress
         );
         break;
-        
+
       default:
         throw new Error(`Unknown jetton action: ${params.jettonAction}`);
     }
 
     elizaLogger.debug("Jetton action executed successfully", result);
-    
+
     const response = {
       text: JSON.stringify(result, null, 2),
       content: result,
     };
-    
+
     if (callback) {
       elizaLogger.debug("Calling callback with result");
       callback(response);
     }
-    
+
     return response;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     elizaLogger.error("Error in jetton interaction handler", error);
-    
+
     const errorResponse = {
       text: `Error in jetton interaction: ${errorMessage}`,
       content: { error: errorMessage, details: error },
     };
-    
+
     if (callback) {
       elizaLogger.debug("Calling callback with error");
       callback(errorResponse);
     }
-    
+
     return errorResponse;
   }
 };
@@ -796,4 +796,4 @@ export default {
       },
     ],
   ],
-}; 
+};

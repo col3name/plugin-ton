@@ -1,8 +1,8 @@
 import {
     elizaLogger,
-    composeContext,
-    generateObject,
-    ModelClass,
+    composePromptFromState,
+    parseKeyValueXml,
+    ModelType as ModelClass,
     type IAgentRuntime,
     type Memory,
     type State,
@@ -63,17 +63,17 @@ import { buyListing } from "../services/nft-marketplace/listingTransactions";
     message: Memory,
     state: State
   ): Promise<BuyListingContent> => {
-    const context = composeContext({
+    const context = composePromptFromState({
       state,
       template: buyListingTemplate,
     });
-    const content = await generateObject({
+    const result = await runtime.useModel(ModelClass.TEXT_SMALL, {
       runtime,
       context,
       schema: buyListingSchema as any,
-      modelClass: ModelClass.SMALL,
     });
-    return content.object as any;
+    const content = parseKeyValueXml(result);
+    return content?.object as any;
   };
 
   /**
@@ -97,7 +97,7 @@ import { buyListing } from "../services/nft-marketplace/listingTransactions";
         return receipt;
       } catch (error) {
         elizaLogger.error(`Error buying NFT ${nftAddress}: ${error}`);
-        throw new Error(`Failed to buy NFT: ${error.message}`);
+        throw new Error(`Failed to buy NFT: ${error?.message}`);
       }
     }
   }

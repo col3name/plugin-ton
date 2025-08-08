@@ -5,9 +5,9 @@ import {
     type Memory,
     type State,
     elizaLogger,
-    ModelClass,
-    generateObject,
-    composeContext
+    composePromptFromState,
+    parseKeyValueXml,
+    ModelType as ModelClass,
 } from "@elizaos/core";
 import { sleep, convertToBigInt } from "../utils/util";
 import BigNumber from "bignumber.js";
@@ -407,20 +407,20 @@ const withdrawAction: Action = {
 
         try {
             // Compose context to extract withdrawal parameters
-            const withdrawContext = composeContext({
+            const withdrawContext = composePromptFromState({
                 state,
                 template: withdrawTemplate
             });
 
-            const content = await generateObject({
+            const result = await runtime.useModel(ModelClass.LARGE, {
                 runtime,
                 context: withdrawContext,
                 schema: withdrawSchema,
-                modelClass: ModelClass.LARGE,
             });
+            const content = await parseKeyValueXml(result);
 
-            const withdrawDetails = content.object as WithdrawContent;
-            elizaLogger.debug(`Withdraw details: ${JSON.stringify(content.object)}`);
+            const withdrawDetails = content?.object as WithdrawContent;
+            elizaLogger.debug(`Withdraw details: ${JSON.stringify(content?.object)}`);
 
             if (!isWithdrawContent(withdrawDetails)) {
                 throw new Error("Invalid withdrawing parameters");

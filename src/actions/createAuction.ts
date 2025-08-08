@@ -1,8 +1,8 @@
 import {
     elizaLogger,
-    composeContext,
-    generateObject,
-    ModelClass,
+    composePromptFromState,
+    parseKeyValueXml,
+    ModelType as ModelClass,
     type IAgentRuntime,
     type Memory,
     type State,
@@ -87,17 +87,18 @@ import {
     message: Memory,
     state: State
   ): Promise<CreateAuctionContent> => {
-    const context = composeContext({
+    const context = composePromptFromState({
       state,
       template: createAuctionTemplate,
     });
-    const content = await generateObject({
+    const result = await runtime.useModel(ModelClass.SMALL, {
       runtime,
       context,
       schema: createAuctionSchema as any,
-      modelClass: ModelClass.SMALL,
     });
-    return content.object as any;
+    const content = await parseKeyValueXml(result);
+
+    return content?.object as any;
   };
 
   /**

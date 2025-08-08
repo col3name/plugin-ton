@@ -1,10 +1,10 @@
 import {
     elizaLogger,
-    composeContext,
     type Content,
     type HandlerCallback,
-    ModelClass,
-    generateObject,
+    composePromptFromState,
+    parseKeyValueXml,
+    ModelType as ModelClass,
     type IAgentRuntime,
     type Memory,
     type State,
@@ -173,7 +173,7 @@ const buildGetLendingInfo = async (
     if (!currentState) {
         currentState = (await runtime.composeState(message)) as State;
     } else {
-        currentState = await runtime.updateRecentMessageState(currentState);
+        currentState = await runtime.composeState(message, ['RECENT_MESSAGES']);
     }
 
     // Define the schema for the expected output
@@ -182,20 +182,19 @@ const buildGetLendingInfo = async (
     });
 
     // Compose lending info getter context
-    const getLendingInfoContext = composeContext({
+    const getLendingInfoContext = composePromptFromState({
         state,
         template: getLendingInfoTemplate,
     });
 
-    const content = await generateObject({
+    const result = await runtime.useModel(ModelClass.SMALL, {
         runtime,
         context: getLendingInfoContext,
         schema: getLendingInfoSchema,
-        modelClass: ModelClass.SMALL,
     });
-
+    const content = await parseKeyValueXml(result);
     let getLendingInfoContent: LendingInfoContent =
-        content.object as LendingInfoContent;
+        content?.object as LendingInfoContent;
 
     if (getLendingInfoContent === undefined) {
         getLendingInfoContent = content as unknown as LendingInfoContent;

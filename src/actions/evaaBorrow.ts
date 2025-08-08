@@ -5,9 +5,9 @@ import {
     type Memory,
     type State,
     elizaLogger,
-    ModelClass,
-    composeContext,
-    generateObject
+    composePromptFromState,
+    parseKeyValueXml,
+    ModelType as ModelClass,
 } from "@elizaos/core";
 import { sleep, convertToBigInt } from "../utils/util";
 import BigNumber from "bignumber.js";
@@ -486,20 +486,20 @@ const borrowAction: Action = {
 
         try {
             // Compose context to extract borrowing parameters
-            const borrowContext = composeContext({
+            const borrowContext = composePromptFromState({
                 state,
                 template: borrowTemplate
             });
 
-            const content = await generateObject({
+            const result = await runtime.useModel(ModelClass.LARGE, {
                 runtime,
                 context: borrowContext,
                 schema: borrowSchema,
-                modelClass: ModelClass.LARGE,
             });
+            const content = await parseKeyValueXml(result);
 
-            const borrowDetails = content.object as BorrowContent;
-            elizaLogger.debug(`Borrow details: ${JSON.stringify(content.object)}`);
+            const borrowDetails = content?.object as BorrowContent;
+            elizaLogger.debug(`Borrow details: ${JSON.stringify(content?.object)}`);
 
             if (!isBorrowContent(borrowDetails)) {
                 throw new Error("Invalid borrowing parameters");

@@ -5,9 +5,9 @@ import {
     type Memory,
     type State,
     elizaLogger,
-    ModelClass,
-    generateObject,
-    composeContext
+    composePromptFromState,
+    parseKeyValueXml,
+    ModelType as ModelClass,
 } from "@elizaos/core";
 import { sleep, convertToBigInt } from "../utils/util";
 import BigNumber from "bignumber.js";
@@ -397,20 +397,20 @@ const repayAction: Action = {
 
         try {
             // Compose context to extract repayment parameters
-            const repayContext = composeContext({
+            const repayContext = composePromptFromState({
                 state,
                 template: repayTemplate
             });
 
-            const content = await generateObject({
+            const result = await runtime.useModel(ModelClass.LARGE, {
                 runtime,
                 context: repayContext,
                 schema: repaySchema,
-                modelClass: ModelClass.LARGE,
             });
+            const content = await parseKeyValueXml(result);
 
-            const repayDetails = content.object as RepayContent;
-            elizaLogger.debug(`Repay details: ${JSON.stringify(content.object)}`);
+            const repayDetails = content?.object as RepayContent;
+            elizaLogger.debug(`Repay details: ${JSON.stringify(content?.object)}`);
 
             if (!isRepayContent(repayDetails)) {
                 throw new Error("Invalid repaying parameters");

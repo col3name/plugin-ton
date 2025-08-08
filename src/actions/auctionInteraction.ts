@@ -1,14 +1,15 @@
 import {
   elizaLogger,
-  composeContext,
-  generateObject,
-  ModelClass,
+  composePromptFromState,
+  parseKeyValueXml,
+  ModelType as ModelClass,
   type IAgentRuntime,
   type Memory,
   type State,
   type HandlerCallback,
   Content,
 } from "@elizaos/core";
+
 import { Address, internal, SendMode, toNano, beginCell } from "@ton/ton";
 import { Builder } from "@ton/ton";
 import { z } from "zod";
@@ -187,17 +188,17 @@ const buildAuctionInteractionData = async (
   message: Memory,
   state: State
 ): Promise<AuctionInteractionContent> => {
-  const context = composeContext({
+  const context =  composePromptFromState({
     state,
     template: auctionInteractionTemplate,
   });
-  const content = await generateObject({
+  const result = await runtime.useModel(ModelClass.SMALL, {
     runtime,
     context,
     schema: auctionInteractionSchema as any,
-    modelClass: ModelClass.SMALL,
   });
-  return content.object as any;
+  const content = parseKeyValueXml(result);
+  return content?.object as any;
 };
 
 /**

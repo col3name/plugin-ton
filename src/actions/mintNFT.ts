@@ -1,8 +1,8 @@
 import {
   elizaLogger,
-  composeContext,
-  generateObject,
-  ModelClass,
+  composePromptFromState,
+  parseKeyValueXml,
+  ModelType as ModelClass,
   type IAgentRuntime,
   type Memory,
   type State,
@@ -48,31 +48,31 @@ export interface MintContent extends Content {
  */
 function isMintContent(content: Content): content is MintContent {
   elizaLogger.log("Validating mint content:", content);
-  
+
   // Basic validation
   if (!content.nftType || !content.storage) {
     elizaLogger.error("Missing required fields: nftType or storage");
     return false;
   }
-  
+
   // Validate nftType
   if (content.nftType !== "collection" && content.nftType !== "standalone") {
     elizaLogger.error(`Invalid nftType: ${content.nftType}`);
     return false;
   }
-  
+
   // Validate collection address for standalone NFTs
   if (content.nftType === "standalone" && !content.collection) {
     elizaLogger.error("Collection address is required for standalone NFTs");
     return false;
   }
-  
+
   // Validate storage type
   if (content.storage !== "file" && content.storage !== "prompt") {
     elizaLogger.error(`Invalid storage type: ${content.storage}`);
     return false;
   }
-  
+
   return true;
 }
 
@@ -113,7 +113,7 @@ const mintNFTSchema = z
     path: ["collection"],
   });
 
-  
+
 /**
  * Template string to guide the AI agent.
  */
@@ -181,23 +181,24 @@ const buildMintDetails = async (
   if (!currentState) {
     currentState = (await runtime.composeState(message)) as State;
   } else {
-    currentState = await runtime.updateRecentMessageState(currentState);
+    currentState = await runtime.composeState(message, ['RECENT_MESSAGES']);
   }
 
-  const mintContext = composeContext({
+  const mintContext = composePromptFromState({
     state: currentState,
     template: mintNFTTemplate,
   });
 
   try {
-    const content = await generateObject({
+    const result = await runtime.useModel(ModelClass.SMALL, {
       runtime,
       context: mintContext,
       schema: mintNFTSchema,
-      modelClass: ModelClass.SMALL,
     });
 
-    let mintContent: MintContent = content.object as MintContent;
+    const content = await parseKeyValueXml(result);
+
+    let mintContent: MintContent = content?.object as MintContent;
     if (mintContent === undefined) {
       mintContent = content as unknown as MintContent;
     }
@@ -229,19 +230,19 @@ class MintNFTAction {
   private async uploadContent(params: MintContent): Promise<{ metadataIpfsHash: string, imagesIpfsHash?: string }> {
     let metadataIpfsHash: string;
     let imagesIpfsHash: string | undefined;
-    
+
     try {
       if (params.storage === "file") {
         if (!params.imagesFolderPath || !params.metadataFolderPath) {
           throw new Error("Image and metadata folder paths are required for file storage");
         }
-        
+
         elizaLogger.log("Started uploading images to IPFS...");
         imagesIpfsHash = await uploadFolderToIPFS(params.imagesFolderPath);
         elizaLogger.log(
           `Successfully uploaded the pictures to ipfs: https://gateway.pinata.cloud/ipfs/${imagesIpfsHash}`
         );
-      
+
         elizaLogger.log("Started uploading metadata files to IPFS...");
         await updateMetadataFiles(params.metadataFolderPath, imagesIpfsHash);
         metadataIpfsHash = await uploadFolderToIPFS(params.metadataFolderPath);
@@ -258,7 +259,7 @@ class MintNFTAction {
         elizaLogger.log(`Successfully uploaded metadata to IPFS: ${metadataIpfsHash}`);
         return { metadataIpfsHash };
       }
-      
+
       throw new Error("Invalid storage type");
     } catch (error) {
       elizaLogger.error("Error uploading content to IPFS:", error);
@@ -273,20 +274,20 @@ class MintNFTAction {
     if(!params.collection) {
       throw new Error("Collection address is required for standalone NFTs");
     }
-    
+
     try {
       elizaLogger.log(`Reading metadata files from ${params.metadataFolderPath}`);
       const files = await readdir(params.metadataFolderPath as string);
       files.pop(); // Remove collection.json
       let index = 0;
-      
+
       elizaLogger.log(`Found ${files.length} NFT metadata files to deploy`);
       elizaLogger.log("Topping up wallet balance...");
       let seqno = await topUpBalance(this.walletProvider, files.length, params.collection);
       const walletClient = this.walletProvider.getWalletClient();
       const contract = walletClient.open(this.walletProvider.wallet);
       await waitSeqnoContract(seqno, contract);
-      
+
       for (const file of files) {
         elizaLogger.log(`Starting deployment of NFT ${index + 1}/${files.length}`);
         const mintParams = {
@@ -296,7 +297,7 @@ class MintNFTAction {
           amount: toNano("0.05"),
           commonContentUrl: file,
         };
-    
+
         const nftItem = new NftItem(params.collection);
         seqno = await nftItem.deploy(this.walletProvider, mintParams);
         await waitSeqnoContract(seqno, this.walletProvider.wallet);
@@ -304,8 +305,8 @@ class MintNFTAction {
         // Get the NFT address using the getAddressByIndex function
         const client = this.walletProvider.getWalletClient();
         const nftAddress = await getAddressByIndex(
-          client, 
-          Address.parse(params.collection), 
+          client,
+          Address.parse(params.collection),
           index
         );
         elizaLogger.log(`Successfully deployed NFT ${index + 1}/${files.length} with address: ${nftAddress}`);
@@ -313,7 +314,7 @@ class MintNFTAction {
         // Add to deployedNfts array if you want to track them
         index++;
       }
-      
+
     } catch (error) {
       elizaLogger.error("Error deploying standalone NFT:", error);
       throw new Error(`Failed to deploy standalone NFT: ${error.message}`);
@@ -326,29 +327,29 @@ class MintNFTAction {
   private async deployCollection(params: MintContent, metadataIpfsHash: string): Promise<string> {
     try {
       elizaLogger.log("[TON] Starting deployment of NFT collection...");
-      
+
       // Use default values if not provided
       const royaltyPercent = params.royaltyPercent ?? 5;
-      const royaltyAddress = params.royaltyAddress 
-        ? Address.parse(params.royaltyAddress) 
+      const royaltyAddress = params.royaltyAddress
+        ? Address.parse(params.royaltyAddress)
         : this.walletProvider.wallet.address;
-      
+
       const collectionData: CollectionData = {
         ownerAddress: this.walletProvider.wallet.address,
-        royaltyPercent: royaltyPercent, 
+        royaltyPercent: royaltyPercent,
         royaltyAddress: royaltyAddress,
         nextItemIndex: 0,
         collectionContentUrl: `ipfs://${metadataIpfsHash}/collection.json`,
         commonContentUrl: `ipfs://${metadataIpfsHash}/`,
       };
-      
+
       elizaLogger.log("Creating NFT collection with data:", {
         owner: collectionData.ownerAddress.toString(),
         royaltyPercent: collectionData.royaltyPercent,
         royaltyAddress: collectionData.royaltyAddress.toString(),
         collectionContentUrl: collectionData.collectionContentUrl,
       });
-      
+
       const collection = new NFTCollection(collectionData);
       let seqno = await collection.deploy(this.walletProvider);
       elizaLogger.log(`Collection deployment transaction sent, waiting for confirmation...`);
@@ -357,7 +358,7 @@ class MintNFTAction {
       const contract = walletClient.open(this.walletProvider.wallet);
       await waitSeqnoContract(seqno, contract);
       elizaLogger.log(`Collection successfully deployed: ${collection.address}`);
-      
+
       return collection.address.toString();
     } catch (error) {
       elizaLogger.error("Error deploying NFT collection:", error);
@@ -377,7 +378,7 @@ class MintNFTAction {
     try {
       elizaLogger.log(`Starting NFT minting process for type: ${params.nftType}`);
       elizaLogger.log(`Using storage type: ${params.storage}`);
-      
+
       const { metadataIpfsHash } = await this.uploadContent(params);
       elizaLogger.log(`Content uploaded to IPFS with hash: ${metadataIpfsHash}`);
 
@@ -433,12 +434,12 @@ export default {
       }
 
       // Set default paths if not provided
-      mintParams.imagesFolderPath = mintParams.imagesFolderPath || 
-        runtime.getSetting("TON_NFT_IMAGES_FOLDER") || 
+      mintParams.imagesFolderPath = mintParams.imagesFolderPath ||
+        runtime.getSetting("TON_NFT_IMAGES_FOLDER") ||
         path.join(process.cwd(), "ton_nft_images");
-      
-      mintParams.metadataFolderPath = mintParams.metadataFolderPath || 
-        runtime.getSetting("TON_NFT_METADATA_FOLDER") || 
+
+      mintParams.metadataFolderPath = mintParams.metadataFolderPath ||
+        runtime.getSetting("TON_NFT_METADATA_FOLDER") ||
         path.join(process.cwd(), "ton_nft_metadata");
 
       elizaLogger.log("Using paths:", {
@@ -512,4 +513,4 @@ export default {
     ],
   ],
   template: mintNFTTemplate,
-}; 
+};

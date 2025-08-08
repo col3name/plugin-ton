@@ -1,10 +1,10 @@
 import {
     elizaLogger,
-    composeContext,
     type Content,
     type HandlerCallback,
-    ModelClass,
-    generateObject,
+    composePromptFromState,
+    parseKeyValueXml,
+    ModelType as ModelClass,
     type IAgentRuntime,
     type Memory,
     type State,
@@ -135,7 +135,7 @@ const buildTransferDetails = async (
     if (!currentState) {
         currentState = (await runtime.composeState(message)) as State;
     } else {
-        currentState = await runtime.updateRecentMessageState(currentState);
+        currentState = await runtime.composeState(message, ['RECENT_MESSAGES']);
     }
 
     // Define the schema for the expected output
@@ -145,20 +145,20 @@ const buildTransferDetails = async (
     });
 
     // Compose transfer context
-    const transferContext = composeContext({
+    const transferContext = composePromptFromState({
         state,
         template: transferTemplate,
     });
 
     // Generate transfer content with the schema
-    const content = await generateObject({
+    const result = await runtime.useModel(ModelClass.SMALL, {
         runtime,
         context: transferContext,
         schema: transferSchema,
-        modelClass: ModelClass.SMALL,
     });
+    const content = await parseKeyValueXml(result);
 
-    let transferContent: TransferContent = content.object as TransferContent;
+    let transferContent: TransferContent = content?.object as TransferContent;
 
     if (transferContent === undefined) {
         transferContent = content as unknown as TransferContent;

@@ -1,10 +1,10 @@
 import {
     elizaLogger,
-    composeContext,
     type Content,
     type HandlerCallback,
-    ModelClass,
-    generateObject,
+    composePromptFromState,
+    parseKeyValueXml,
+    ModelType as ModelClass,
     type IAgentRuntime,
     type Memory,
     type State,
@@ -61,25 +61,25 @@ const buildPoolInfoDetails = async (
     if (!state) {
         state = (await runtime.composeState(message)) as State;
     } else {
-        state = await runtime.updateRecentMessageState(state);
+        state = await runtime.composeState(message, ['RECENT_MESSAGES']);
     }
     const poolInfoSchema = z.object({
         poolId: z.string(),
     });
 
-    const poolInfoContext = composeContext({
+    const poolInfoContext = composePromptFromState({
         state,
         template: getPoolInfoTemplate,
     });
 
-    const content = await generateObject({
+    const result = await runtime.useModel(ModelClass.SMALL, {
         runtime,
         context: poolInfoContext,
         schema: poolInfoSchema,
-        modelClass: ModelClass.SMALL,
     });
+    const content = await parseKeyValueXml(result);
 
-    return content.object as PoolInfoContent;
+    return content?.object as PoolInfoContent;
 };
 
 export default {

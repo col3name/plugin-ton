@@ -1,8 +1,8 @@
 import {
     elizaLogger,
-    composeContext,
-    generateObject,
-    ModelClass,
+    composePromptFromState,
+    parseKeyValueXml,
+    ModelType as ModelClass,
     type IAgentRuntime,
     type Memory,
     type State,
@@ -14,7 +14,7 @@ import {
   import { z } from "zod";
   import { initWalletProvider, nativeWalletProvider, WalletProvider } from "../providers/wallet";
   import { base64ToHex, sanitizeTonAddress, sleep, waitSeqnoContract } from "../utils/util";
-  
+
   export interface SingleTransferContent {
     type: "ton" | "token" | "nft";
     recipientAddress: string;
@@ -23,9 +23,9 @@ import {
     jettonMasterAddress?: string;
     metadata?: string;
   }
-  
+
   export type BatchTransferContent = SingleTransferContent[];
-  
+
   interface Report {
     type: string;
     recipientAddress: string;
@@ -34,12 +34,12 @@ import {
     status: string;
     error?: string;
   }
-  
+
   interface ReportWithMessage {
     report: Report;
     message?: any;
   }
-  
+
   // Schema for each transfer item in the batch.
   const transferItemSchema = z
     .object({
@@ -69,7 +69,7 @@ import {
       message: "tokenId is required for NFT transfers",
       path: ["tokenId"],
     });
-  
+
   // Schema for a batch transfer request with relaxed validation
   const batchTransferSchema = z.union([
     transferItemSchema,
@@ -79,7 +79,7 @@ import {
     // Normalize to array
     return Array.isArray(data) ? data : [data];
   });
-  
+
   const batchTransferTemplate = `Return a JSON array for the transfer(s). The response should contain no schema information or additional properties.
   
   Example:
@@ -114,16 +114,16 @@ import {
   {{recentMessages}}
   
   IMPORTANT: Return ONLY the transfer object(s) with no schema information or wrapper object.`;
-  
+
   type TransferItem = z.infer<typeof transferItemSchema>;
-  
+
   function isBatchTransferContent(content: any): content is BatchTransferContent {
     if (Array.isArray(content)) {
       return content.every(transfer => transferItemSchema.safeParse(transfer).success);
     }
     return transferItemSchema.safeParse(content).success;
   }
-  
+
   /**
    * Deduplicates transfer items based on type and relevant properties.
    * Rules:
@@ -138,7 +138,7 @@ import {
 
     for (const transfer of transfers) {
       let key: string;
-      
+
       // Initialize recipient's transfer types set if not exists
       if (!processedRecipients.has(transfer.recipientAddress)) {
         processedRecipients.set(transfer.recipientAddress, new Set());
@@ -178,7 +178,7 @@ import {
     // console.log('Deduplication output:', result);
     return result;
   }
-  
+
   /**
    * BatchTransferAction encapsulates the core logic for creating a batch transfer which can include
    * TON coins, fungible tokens (e.g., Jettons), and NFTs. Each transfer item is processed individually,
@@ -189,7 +189,7 @@ import {
     constructor(walletProvider: WalletProvider) {
       this.walletProvider = walletProvider;
     }
-  
+
     /**
      * Build a TON transfer message.
      */
@@ -210,7 +210,7 @@ import {
         message,
       };
     }
-  
+
     /**
      * Build a token transfer message.
      */
@@ -218,14 +218,14 @@ import {
       const tokenAddress = Address.parse(item.jettonMasterAddress!);
       const client = this.walletProvider.getWalletClient();
       const jettonMaster = client.open(JettonMaster.create(tokenAddress));
-      
+
       const jettonWalletAddress = await jettonMaster.getWalletAddress(this.walletProvider.wallet.address);
-      
+
       const forwardPayload = beginCell()
         .storeUint(0, 32) // 0 opcode means we have a comment
         .storeStringTail(item.metadata || "Hello, TON!")
         .endCell();
-  
+
       const tokenTransferBody = new Builder()
         .storeUint(0x0f8a7ea5, 32)
         .storeUint(0, 64)
@@ -237,14 +237,14 @@ import {
         .storeBit(1)
         .storeRef(forwardPayload)
         .endCell();
-  
+
       const message = internal({
         to: jettonWalletAddress,
         value: toNano('0.1'),
         bounce: true,
         body: tokenTransferBody,
       });
-  
+
       const report: ReportWithMessage = {
         report: {
           type: item.type,
@@ -257,7 +257,7 @@ import {
     };
       return report;
     }
-  
+
     /**
      * Build an NFT transfer message.
      */
@@ -271,14 +271,14 @@ import {
         .storeCoins(toNano('0.01')) // forward_amount (0.01 TON for notification)
         .storeMaybeRef(null) // forward_payload (null in this case)
         .endCell();
-  
+
       const message = internal({
         to: Address.parse(item.tokenId!),
         value: toNano('0.05'), // Gas fee for the transfer
         bounce: true,
         body: nftTransferBody,
       });
-  
+
       return {
         message,
         report: {
@@ -289,7 +289,7 @@ import {
         },
       };
     }
-  
+
     private async processTransferItem(item: TransferItem): Promise<ReportWithMessage> {
       const recipientAddress = sanitizeTonAddress(item.recipientAddress);
       if (!recipientAddress) {
@@ -378,7 +378,7 @@ import {
     async createBatchTransfer(params: BatchTransferContent): Promise<{hash?: string; reports: Report[]}> {
       // Deduplicate transfers before processing
       const uniqueTransfers = deduplicateTransfers(params);
-      
+
       const processResults = await Promise.all(
         uniqueTransfers.map(async (item) => {
           try {
@@ -421,8 +421,8 @@ import {
       return { hash, reports: transferReports };
     }
   }
-  
-  
+
+
   const buildBatchTransferDetails = async (
       runtime: IAgentRuntime,
       message: Memory,
@@ -430,39 +430,39 @@ import {
   ): Promise<BatchTransferContent> => {
       const walletInfo = await nativeWalletProvider.get(runtime, message, state);
       state.walletInfo = walletInfo;
-  
+
       // Initialize or update state
       let currentState = state;
       if (!currentState) {
           currentState = (await runtime.composeState(message)) as State;
       } else {
-          currentState = await runtime.updateRecentMessageState(currentState);
+          currentState = await runtime.composeState(message, ['RECENT_MESSAGES']);
       }
-  
-  
+
       // Compose transfer context
-      const batchTransferContext = composeContext({
+      const batchTransferContext = composePromptFromState({
           state,
           template: batchTransferTemplate,
       });
-  
+
       // Generate transfer content with the schema
-      const content = await generateObject({
+      const result = await runtime.useModel(ModelClass.SMALL, {
           runtime,
           context: batchTransferContext,
           schema: batchTransferSchema,
           modelClass: ModelClass.SMALL,
       });
-  
-      let batchTransferContent: BatchTransferContent = content.object as BatchTransferContent;
-  
+      const content = await parseKeyValueXml(result);
+
+      let batchTransferContent: BatchTransferContent = content?.object as BatchTransferContent;
+
       if (batchTransferContent === undefined) {
           batchTransferContent = content as unknown as BatchTransferContent;
       }
-  
+
       return batchTransferContent;
   };
-  
+
   export default {
     name: "BATCH_TRANSFER",
     similes: ["BATCH_ASSET_TRANSFER", "MULTI_ASSET_TRANSFER"],
@@ -478,7 +478,7 @@ import {
       callback?: HandlerCallback
     ) => {
       elizaLogger.log("Starting BATCH_TRANSFER handler...");
-  
+
       const details: BatchTransferContent = await buildBatchTransferDetails(runtime, message, state);
       console.log(details);
       if(!isBatchTransferContent(details)) {
@@ -492,12 +492,12 @@ import {
           return false;
       }
       try {
-  
+
         const walletProvider = await initWalletProvider(runtime);
         const batchTransferAction = new BatchTransferAction(walletProvider);
         const res = await batchTransferAction.createBatchTransfer(details);
         let text = "";
-  
+
         const reports: Report[] = res.reports;
         if(!res.hash) {
           // for each failed result i want to describe the error in the final message
@@ -506,11 +506,11 @@ import {
             text += `Error in transfer to ${report.recipientAddress}: ${report.error}\n\n`;
           });
         }
-  
+
         if(text === "") {
           text = `Batch transfer processed successfully. \n\n${reports.map((report: Report) => `Transfer to ${report.recipientAddress} ${report.status === "success" ? "succeeded" : "failed"}`).join("\n")} \n\nTotal transfers: ${reports.length} \n\nTransaction hash: ${res.hash}`;
         }
-  
+
         if (callback) {
           callback({
             text: text,
@@ -547,4 +547,4 @@ import {
         },
       ],
     ],
-  }; 
+  };

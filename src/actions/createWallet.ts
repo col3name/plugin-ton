@@ -4,10 +4,10 @@ import {
     type Memory,
     type State,
     type HandlerCallback,
-    ModelClass,
-    generateObject,
     Content,
-    composeContext,
+    composePromptFromState,
+    parseKeyValueXml,
+    ModelType as ModelClass,
 } from "@elizaos/core";
 import { WalletProvider } from "../providers/wallet";
 import { z } from "zod";
@@ -24,7 +24,7 @@ function isCreateWalletContent(content: Content): content is CreateWalletContent
 export const passwordSchema = z.object({
     encryptionPassword: z.string().min(1, "Encryption password is required and cannot be empty."),
   });
-  
+
   // Define a template to guide object building (similar to the mint NFT example)
   export const passwordTemplate = `Respond with a JSON markdown block containing only the extracted values. Use null for any values that cannot be determined.
   Example response:
@@ -37,7 +37,7 @@ export const passwordSchema = z.object({
   {{recentMessages}}
 
   Respond with a JSON markdown block containing only the extracted values.`;
-  
+
   /**
    * Builds and validates a password object using the provided runtime, message, and state.
    * This function mimics the object building approach used in the mint NFT action.
@@ -49,22 +49,23 @@ export const passwordSchema = z.object({
   ): Promise<CreateWalletContent> {
     // Compose the current state (or create one based on the message)
     const currentState = state || (await runtime.composeState(message));
-  
+
     // Compose a context to drive the object geSneration.
-    const context = composeContext({
+    const context = composePromptFromState({
       state: currentState,
       template: passwordTemplate,
     });
-  
+
     // Generate an object using the defined schema.
-    const result = await generateObject({
+    const result = await runtime.useModel(ModelClass.SMALL, {
       runtime,
       context,
       schema: passwordSchema,
-      modelClass: ModelClass.SMALL,
     });
-  
-    let passwordData = result.object;
+
+    const content = await parseKeyValueXml(result);
+
+    let passwordData = content?.object;
     if (!passwordData) {
       // If the generated object is undefined, cast the result to ensure password extraction.
       passwordData = result as unknown as { password: string };
@@ -109,7 +110,7 @@ export default {
 
         // Build password details using the object building approach like in the mint NFT action.
         const createWalletContent = await buildCreateWalletDetails(runtime, message, state);
-        
+
         elizaLogger.debug("createWalletContent", createWalletContent);
         if(!isCreateWalletContent(createWalletContent)) {
             if(callback) {
@@ -175,7 +176,7 @@ ${mnemonic.join(" ")}`,
                     text: "New TON wallet created!/n Your password was used to encrypt the wallet keypair, but never stored./nWallet Address: EQAXxxxxxxxxxxxxxxxxxxxxxx./n I've used both your password and the mnemonic to create the wallet./nPlease securely store your mnemonic",
                 },
             },
-            
+
         ],
         [
             {
@@ -193,4 +194,4 @@ ${mnemonic.join(" ")}`,
             },
         ]
     ],
-}; 
+};

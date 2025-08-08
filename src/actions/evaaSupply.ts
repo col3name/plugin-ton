@@ -5,9 +5,9 @@ import {
     type Memory,
     type State,
     elizaLogger,
-    ModelClass,
-    generateObject,
-    composeContext
+    composePromptFromState,
+    parseKeyValueXml,
+    ModelType as ModelClass,
 } from "@elizaos/core";
 import { sleep, convertToBigInt } from "../utils/util";
 import BigNumber from "bignumber.js";
@@ -490,20 +490,20 @@ const supplyAction: Action = {
 
         try {
             // Compose context to extract lending parameters
-            const supplyContext = composeContext({
+            const supplyContext = composePromptFromState({
                 state,
                 template: lendTemplate
             });
 
-            const content = await generateObject({
+            const result = await runtime.useModel(ModelClass.LARGE, {
                 runtime,
                 context: supplyContext,
                 schema: supplySchema,
-                modelClass: ModelClass.LARGE,
             });
+            const content = await parseKeyValueXml(result);
 
-            const supplyDetails = content.object as SupplyContent;
-            elizaLogger.debug(`Supply details: ${JSON.stringify(content.object)}`);
+            const supplyDetails = content?.object as SupplyContent;
+            elizaLogger.debug(`Supply details: ${JSON.stringify(content?.object)}`);
 
             if (!isSupplyContent(supplyDetails)) {
                 throw new Error("Invalid supplying parameters");

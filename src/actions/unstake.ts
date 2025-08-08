@@ -1,10 +1,10 @@
 import {
     elizaLogger,
-    composeContext,
     type Content,
     type HandlerCallback,
-    ModelClass,
-    generateObject,
+    composePromptFromState,
+    parseKeyValueXml,
+    ModelType as ModelClass,
     type IAgentRuntime,
     type Memory,
     type State,
@@ -70,26 +70,26 @@ const buildUnstakeDetails = async (
     if (!state) {
         state = (await runtime.composeState(message)) as State;
     } else {
-        state = await runtime.updateRecentMessageState(state);
+        state = await runtime.composeState(message, ['RECENT_MESSAGES']);
     }
     const unstakeSchema = z.object({
         poolId: z.string(),
         amount: z.union([z.string(), z.number()]),
     });
 
-    const unstakeContext = composeContext({
+    const unstakeContext = composePromptFromState({
         state,
         template: unstakeTemplate,
     });
 
-    const content = await generateObject({
+    const result = await runtime.useModel(ModelClass.SMALL, {
         runtime,
         context: unstakeContext,
         schema: unstakeSchema,
-        modelClass: ModelClass.SMALL,
     });
+    const content = await parseKeyValueXml(result);
 
-    return content.object as UnstakeContent;
+    return content?.object as UnstakeContent;
 };
 
 export default {

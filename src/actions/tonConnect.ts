@@ -115,7 +115,7 @@ import {
       if (!state) {
         state = (await runtime.composeState(message)) as State;
       } else {
-        state = await runtime.updateRecentMessageState(state);
+        state = await runtime.composeState(message, ['RECENT_MESSAGES']);
       }
       elizaLogger.log("Starting TON_CONNECT handler...");
 
@@ -286,7 +286,7 @@ import {
       if (!state) {
         state = (await runtime.composeState(message)) as State;
       } else {
-        state = await runtime.updateRecentMessageState(state);
+        state = await runtime.composeState(message, ['RECENT_MESSAGES']);
       }
       elizaLogger.log("Starting TON_DISCONNECT handler...");
 
@@ -376,7 +376,7 @@ import {
       if (!state) {
         state = (await runtime.composeState(message)) as State;
       } else {
-        state = await runtime.updateRecentMessageState(state);
+        state = await runtime.composeState(message, ['RECENT_MESSAGES']);
       }
       elizaLogger.log("Starting TON_CONNECTION_STATUS handler...");
 

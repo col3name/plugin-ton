@@ -1,8 +1,8 @@
 import {
   elizaLogger,
-  composeContext,
-  generateObject,
-  ModelClass,
+  composePromptFromState,
+  parseKeyValueXml,
+  ModelType as ModelClass,
   type IAgentRuntime,
   type Memory,
   type State,
@@ -54,7 +54,7 @@ Respond with a JSON markdown block containing only the extracted values.`;
  * Custom serializer for BigInt values
  */
 const safeStringify = (obj: any) => {
-  return JSON.stringify(obj, (_, value) => 
+  return JSON.stringify(obj, (_, value) =>
     typeof value === 'bigint' ? value.toString() : value
   );
 };
@@ -95,13 +95,13 @@ class GetCollectionDataAction {
       elizaLogger.log("Fetching collection data...");
       const collectionDataResult = await walletClient.runMethod(addr, "get_collection_data");
       elizaLogger.log(`Collection data result: ${safeStringify(collectionDataResult)}`);
-      
+
       // Extract the next NFT index and owner address
       const nextItemIndex = collectionDataResult.stack.readNumber();
-      
+
       // Skip the content cell
       collectionDataResult.stack.readCell();
-      
+
       let ownerAddressStr: string | null = null;
       try {
         const ownerAddress = collectionDataResult.stack.readAddress();
@@ -110,18 +110,18 @@ class GetCollectionDataAction {
         elizaLogger.error("Error reading owner address:", e);
         ownerAddressStr = null;
       }
-      
+
       // Get royalty parameters
       let royaltyParams = null;
       try {
         elizaLogger.log("Fetching royalty parameters...");
         const royaltyResult = await walletClient.runMethod(addr, "royalty_params");
         elizaLogger.log(`Royalty result: ${safeStringify(royaltyResult)}`);
-        
+
         const numerator = royaltyResult.stack.readNumber();
         const denominator = royaltyResult.stack.readNumber();
         const destination = royaltyResult.stack.readAddress().toString();
-        
+
         royaltyParams = {
           numerator,
           denominator,
@@ -130,17 +130,17 @@ class GetCollectionDataAction {
       } catch (e) {
         elizaLogger.error("Error fetching royalty parameters:", e);
       }
-      
+
       // Get NFT items by index
       const nftItems = [];
       elizaLogger.log(`Collection has ${nextItemIndex} NFT items. Fetching addresses...`);
-      
+
       for (let i = 0; i < nextItemIndex; i++) {
         try {
           const nftAddressResult = await walletClient.runMethod(addr, "get_nft_address_by_index", [
             { type: "int", value: BigInt(i) }
           ]);
-          
+
           const nftAddress = nftAddressResult.stack.readAddress().toString();
           nftItems.push({
             index: i,
@@ -150,7 +150,7 @@ class GetCollectionDataAction {
           elizaLogger.error(`Error fetching NFT address for index ${i}:`, e);
         }
       }
-  
+
       return {
         collectionAddress,
         nextItemIndex,
@@ -179,22 +179,22 @@ const buildGetCollectionData = async (
   if (!currentState) {
     currentState = (await runtime.composeState(message)) as State;
   } else {
-    currentState = await runtime.updateRecentMessageState(currentState);
+    currentState = await runtime.composeState(message, ['RECENT_MESSAGES']);
   }
 
-  const getCollectionContext = composeContext({
+  const getCollectionContext = composePromptFromState({
     state: currentState,
     template: getCollectionDataTemplate,
   });
-  
-  const content = await generateObject({
+
+  const result = await runtime.useModel(ModelClass.SMALL, {
     runtime,
     context: getCollectionContext,
     schema: getCollectionDataSchema,
-    modelClass: ModelClass.SMALL,
   });
+  const content = await parseKeyValueXml(result);
 
-  let buildGetCollectionDataContent: GetCollectionDataContent = content.object as GetCollectionDataContent;
+  let buildGetCollectionDataContent: GetCollectionDataContent = content?.object as GetCollectionDataContent;
 
   if (buildGetCollectionDataContent === undefined) {
     buildGetCollectionDataContent = content as unknown as GetCollectionDataContent;
@@ -216,7 +216,7 @@ export default {
     callback?: HandlerCallback
   ) => {
     elizaLogger.log("Starting GET_NFT_COLLECTION_DATA handler...");
-    
+
     try {
       // Build collection data details using the helper method.
       const getCollectionDetails = await buildGetCollectionData(runtime, message, state);
@@ -236,16 +236,16 @@ export default {
       const collectionData = await getCollectionDataAction.getData(getCollectionDetails.collectionAddress);
 
       // Format a user-friendly response
-      const nftItemsText = collectionData.nftItems.length > 0 
-        ? `Contains ${collectionData.nftItems.length} NFT items.` 
+      const nftItemsText = collectionData.nftItems.length > 0
+        ? `Contains ${collectionData.nftItems.length} NFT items.`
         : "No NFT items found in this collection.";
-      
-      const royaltyText = collectionData.royaltyParams 
-        ? `Royalty: ${collectionData.royaltyParams.numerator / collectionData.royaltyParams.denominator * 100}% to ${collectionData.royaltyParams.destination}` 
+
+      const royaltyText = collectionData.royaltyParams
+        ? `Royalty: ${collectionData.royaltyParams.numerator / collectionData.royaltyParams.denominator * 100}% to ${collectionData.royaltyParams.destination}`
         : "No royalty information available.";
-      
-      const ownerText = collectionData.ownerAddress 
-        ? `Owner: ${collectionData.ownerAddress}` 
+
+      const ownerText = collectionData.ownerAddress
+        ? `Owner: ${collectionData.ownerAddress}`
         : "Owner information not available.";
 
       const responseText = `Collection data fetched successfully.\n${ownerText}\n${royaltyText}\n${nftItemsText}`;
@@ -288,4 +288,4 @@ export default {
       },
     ],
   ],
-}; 
+};

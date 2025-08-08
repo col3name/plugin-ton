@@ -1,8 +1,8 @@
 import {
   elizaLogger,
-  composeContext,
-  generateObject,
-  ModelClass,
+  composePromptFromState,
+  parseKeyValueXml,
+  ModelType as ModelClass,
   type IAgentRuntime,
   type Memory,
   type State,
@@ -67,17 +67,17 @@ const buildCancelListingData = async (
   message: Memory,
   state: State
 ): Promise<CancelListingContent> => {
-  const context = composeContext({
+  const context = composePromptFromState({
     state,
     template: cancelListingTemplate,
   });
-  const content = await generateObject({
+  const result = await runtime.useModel(ModelClass.TEXT_SMALL, {
     runtime,
     context,
     schema: cancelListingSchema as any,
-    modelClass: ModelClass.SMALL,
   });
-  return content.object as any;
+  const content = await parseKeyValueXml(result);
+  return content?.object as any;
 };
 
 /**

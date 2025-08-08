@@ -5,9 +5,9 @@ import {
   type State,
   type HandlerCallback,
   type Content,
-  composeContext,
-  generateObject,
-  ModelClass,
+  composePromptFromState,
+  parseKeyValueXml,
+  ModelType as ModelClass,
 } from "@elizaos/core";
 import { Address, beginCell, Cell, internal, toNano } from "@ton/ton";
 import { z } from "zod";
@@ -76,8 +76,8 @@ class TransferNFTAction {
       msgBody.storeAddress(params.responseTo || null);
       msgBody.storeBit(false); // no custom payload
       msgBody.storeCoins(params.forwardAmount || 0);
-      msgBody.storeBit(0); // no forward_payload 
-    
+      msgBody.storeBit(0); // no forward_payload
+
       return msgBody.endCell();
     }
   /**
@@ -102,7 +102,7 @@ class TransferNFTAction {
 
       // Create a transfer
       const seqno: number = await contract.getSeqno();
-      
+
       const transfer = contract.createTransfer({
           seqno,
           secretKey: this.walletProvider.keypair.secretKey,
@@ -118,17 +118,17 @@ class TransferNFTAction {
             }),
           ],
       });
-      
+
       await contract.send(transfer);
       elizaLogger.log("Transaction sent, waiting for confirmation...");
-      
+
       // Wait for transaction confirmation using waitSeqnoContract
       await waitSeqnoContract(seqno, contract);
-      
+
       const state = await walletClient.getContractState(
           this.walletProvider.wallet.address,
       );
-      
+
       const { lt: _, hash: lastHash } = state.lastTransaction;
       return base64ToHex(lastHash);
     } catch (error) {
@@ -148,24 +148,24 @@ const buildTransferNFTContent = async (
     if (!currentState) {
         currentState = (await runtime.composeState(message)) as State;
     } else {
-        currentState = await runtime.updateRecentMessageState(currentState);
+        currentState = await runtime.composeState(message, ['RECENT_MESSAGES']);
     }
 
     // Compose transfer context
-    const transferContext = composeContext({
+    const transferContext = composePromptFromState({
         state,
         template: transferNFTTemplate,
     });
 
     // Generate transfer content with the schema
-    const content = await generateObject({
+    const result = await runtime.useModel(ModelClass.SMALL, {
         runtime,
         context: transferContext,
         schema: transferNFTSchema,
-        modelClass: ModelClass.SMALL,
     });
+    const content = await parseKeyValueXml(result);
 
-    let transferContent: TransferNFTContent = content.object as TransferNFTContent;
+    let transferContent: TransferNFTContent = content?.object as TransferNFTContent;
 
     if (transferContent === undefined) {
         transferContent = content as unknown as TransferNFTContent;
@@ -217,7 +217,7 @@ export default {
 
       // Custom serializer for BigInt values
       const safeStringify = (obj: any) => {
-        return JSON.stringify(obj, (_, value) => 
+        return JSON.stringify(obj, (_, value) =>
           typeof value === 'bigint' ? value.toString() : value
         );
       };
@@ -292,4 +292,4 @@ export default {
       },
     ],
   ],
-}; 
+};

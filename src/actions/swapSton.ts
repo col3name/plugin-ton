@@ -1,10 +1,10 @@
 import {
     elizaLogger,
-    composeContext,
     type Content,
     type HandlerCallback,
-    ModelClass,
-    generateObject,
+    composePromptFromState,
+    parseKeyValueXml,
+    ModelType as ModelClass,
     type IAgentRuntime,
     type Memory,
     type State,
@@ -18,11 +18,11 @@ import {
     initWalletProvider,
     type WalletProvider,
 } from "../providers/wallet";
-import { type OpenedContract, 
-         toNano, 
-         type TransactionDescriptionGeneric, 
-         fromNano, 
-         internal 
+import { type OpenedContract,
+         toNano,
+         type TransactionDescriptionGeneric,
+         fromNano,
+         internal
         } from "@ton/ton";
 import { AssetTag } from '@ston-fi/api';
 import { validateEnvConfig } from "../enviroment";
@@ -112,7 +112,7 @@ export class SwapAction {
             if (swapStatus["@type"] === "Found") {
                 if (swapStatus.exitCode === "swap_ok") {
                     return swapStatus;
-                } 
+                }
                 throw new Error("Swap failed");
             }
 
@@ -260,24 +260,24 @@ const buildSwapDetails = async (
     if (!currentState) {
         currentState = (await runtime.composeState(message)) as State;
     } else {
-        currentState = await runtime.updateRecentMessageState(currentState);
+        currentState = await runtime.composeState(message, ['RECENT_MESSAGES']);
     }
 
     // Compose swap context
-    const swapContext = composeContext({
+    const swapContext = composePromptFromState({
         state: currentState,
         template: swapTemplate,
     });
 
     // Generate swap content with the schema
-    const content = await generateObject({
+    const result = await runtime.useModel(ModelClass.SMALL, {
         runtime,
         context: swapContext,
         schema: swapSchema,
-        modelClass: ModelClass.SMALL,
     });
+    const content = await parseKeyValueXml(result);
 
-    let swapContent: ISwapContent = content.object as ISwapContent;
+    let swapContent: ISwapContent = content?.object as ISwapContent;
 
     if (swapContent === undefined) {
         swapContent = content as unknown as ISwapContent;
@@ -296,11 +296,11 @@ const buildFinishSwapDetails = async (
     if (!currentState) {
         currentState = (await runtime.composeState(message)) as State;
     } else {
-        currentState = await runtime.updateRecentMessageState(currentState);
+        currentState = await runtime.composeState(message, ['RECENT_MESSAGES']);
     }
 
     // Compose swap context
-    const swapIsToBeFinished = composeContext({
+    const swapIsToBeFinished = composePromptFromState({
         state: currentState,
         template: finishSwapTemplate,
     });
@@ -314,9 +314,9 @@ const buildFinishSwapDetails = async (
 };
 
 async function handleSwapStart(
-        runtime: IAgentRuntime, 
-        message: Memory, 
-        state: State, 
+        runtime: IAgentRuntime,
+        message: Memory,
+        state: State,
         callback?: HandlerCallback
     ) {
     const swapContent = await buildSwapDetails(
@@ -324,13 +324,13 @@ async function handleSwapStart(
         message,
         state,
     );
-    
+
     // Validate transfer content
     if (!isSwapContent(swapContent)) {
         throw new Error("Invalid content for SWAP action.");
     }
     const stonProvider = await initStonProvider(runtime);
-    
+
     // Check if tokens are part of available assets and the pair of tokens is also defined
     const [inTokenAsset, outTokenAsset] = await stonProvider.getAssets(
         swapContent.tokenIn,
@@ -352,7 +352,7 @@ async function handleSwapStart(
     const response = await replaceLastMemory(runtime, state, template);
 
     callback?.(response.content);
-    
+
     await runtime.cacheManager.set("pendingStonSwap", {
         amountIn: swapContent.amountIn,
         assetIn: inTokenAsset,
@@ -361,9 +361,9 @@ async function handleSwapStart(
 }
 
 async function handleSwapFinish(
-        runtime: IAgentRuntime, 
-        message: Memory, 
-        state: State, 
+        runtime: IAgentRuntime,
+        message: Memory,
+        state: State,
         pendingSwap: IPendingSwapContent,
         callback?: HandlerCallback
     ) {
@@ -397,9 +397,9 @@ async function handleSwapFinish(
     const tonConnectProvider = await initTonConnectProvider(runtime);
     const action = new SwapAction(walletProvider, stonProvider, tonConnectProvider);
     const { txHash, amountOut } = await action.swap(pendingSwap.assetIn, pendingSwap.assetOut, pendingSwap.amountIn);
-    
+
     elizaLogger.success(`Successfully swapped ${pendingSwap.amountIn} ${pendingSwap.assetIn.symbol} for ${fromNano(amountOut)} ${pendingSwap.assetOut.symbol}, Transaction: ${txHash}`);
-    
+
     const template = `
     # Recent messages:
     {{recentMessages}}
@@ -415,7 +415,7 @@ async function handleSwapFinish(
 
     callback?.(response.content);
 
-    await runtime.cacheManager.delete("pendingStonSwap");        
+    await runtime.cacheManager.delete("pendingStonSwap");
 }
 
 export const swapStonAction = {
@@ -445,12 +445,12 @@ export const swapStonAction = {
 
             if (pendingSwap) {
                 throw new Error("Pending swap, finish it before starting a new one");
-            } 
+            }
 
             await handleSwapStart(runtime, message, state, callback);
 
             return true;
-    
+
         } catch (error) {
             elizaLogger.error("Error during token swap:", error);
 
@@ -567,11 +567,11 @@ export const finishSwapStonAction = {
 
             if (!pendingSwap) {
                 throw new Error("No pending swap, start a new one first");
-            } 
-            
+            }
+
             await handleSwapFinish(runtime, message, state, pendingSwap as IPendingSwapContent, callback);
             return true;
-    
+
         } catch (error) {
             elizaLogger.error("Error during token swap:", error);
 
@@ -711,10 +711,10 @@ export const getPendingStonSwapDetailsAction = {
             }
             const response = await replaceLastMemory(runtime, state, template);
 
-            await callback?.(response.content);           
-            
+            await callback?.(response.content);
+
             return true;
-    
+
         } catch (error) {
             elizaLogger.error("Error during token swap:", error);
 

@@ -1,10 +1,10 @@
 import {
     elizaLogger,
-    composeContext,
     type Content,
     type HandlerCallback,
-    ModelClass,
-    generateObject,
+    composePromptFromState,
+    parseKeyValueXml,
+    ModelType as ModelClass,
     type IAgentRuntime,
     type Memory,
     type State,
@@ -127,7 +127,7 @@ const buildTonConnectSendTransactionDetails = async (
     if (!currentState) {
         currentState = (await runtime.composeState(message)) as State;
     } else {
-        currentState = await runtime.updateRecentMessageState(currentState);
+        currentState = await runtime.composeState(message, ['RECENT_MESSAGES']);
     }
 
     const transactionSchema = z.object({
@@ -144,19 +144,19 @@ const buildTonConnectSendTransactionDetails = async (
         ),
     });
 
-    const transactionContext = composeContext({
+    const transactionContext = composePromptFromState({
         state,
         template: tonConnectSendTransactionTemplate,
     });
 
-    const content = await generateObject({
+    const result = await runtime.useModel(ModelClass.SMALL, {
         runtime,
         context: transactionContext,
         schema: transactionSchema,
-        modelClass: ModelClass.SMALL,
     });
 
-    return content.object as TonConnectSendTransactionContent;
+    const content = await parseKeyValueXml(result);
+    return content?.object as TonConnectSendTransactionContent;
 };
 
 export default {

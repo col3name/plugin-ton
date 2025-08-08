@@ -1,10 +1,10 @@
 import {
     elizaLogger,
-    composeContext,
     type Content,
     type HandlerCallback,
-    ModelClass,
-    generateObject,
+    composePromptFromState,
+    parseKeyValueXml,
+    ModelType as ModelClass,
     type IAgentRuntime,
     type Memory,
     type State,
@@ -68,24 +68,25 @@ const buildQueryAssetDetails = async (
     if (!currentState) {
         currentState = (await runtime.composeState(message)) as State;
     } else {
-        currentState = await runtime.updateRecentMessageState(currentState);
+        currentState = await runtime.composeState(message, ['RECENT_MESSAGES']);
     }
 
     // Compose swap context
-    const queryAssetContext = composeContext({
+    const queryAssetContext = composePromptFromState({
         state: currentState,
         template: queryAssetTemplate,
     });
 
     // Generate swap content with the schema
-    const content = await generateObject({
+    const result = await runtime.useModel(ModelClass.SMALL, {
         runtime,
         context: queryAssetContext,
         schema: queryAssetSchema,
-        modelClass: ModelClass.SMALL,
     });
 
-    let queryAssetContent: IQueryAssetContent = content.object as IQueryAssetContent;
+    const content = await parseKeyValueXml(result);
+
+    let queryAssetContent: IQueryAssetContent = content?.object as IQueryAssetContent;
 
     if (queryAssetContent === undefined) {
         queryAssetContent = content as unknown as IQueryAssetContent;
@@ -148,7 +149,7 @@ export default {
                     .map(tag => tag.replace('asset:liquidity:', '').replace('_liquidity', '').replace('_', ' '))[0]}
             - is popular? ${token.tags.includes('asset:popular')}
             `;
-            const responseContext = composeContext({
+            const responseContext = composePromptFromState({
                 state,
                 template
             });
@@ -183,7 +184,7 @@ export default {
             Avoid adding initial and final quotes.
             `;
 
-            const responseContext = composeContext({
+            const responseContext = composePromptFromState({
                 state,
                 template
             });

@@ -5,9 +5,9 @@ import {
     type State,
     type HandlerCallback,
     Content,
-    composeContext,
-    generateObject,
-    ModelClass,
+    composePromptFromState,
+    parseKeyValueXml,
+    ModelType as ModelClass,
 } from "@elizaos/core";
 import { WalletProvider } from "../providers/wallet";
 import { z } from "zod";
@@ -25,7 +25,7 @@ const recoverWalletSchema = z.object({
     password: z.string().min(1, "Password is required and cannot be empty."),
     walletAddress: z.string().min(1, "Wallet address is required and cannot be empty."),
   });
-  
+
   // Define a template to guide object building (similar to the mint NFT example)
   const recoverWalletTemplate = `Respond with a JSON markdown block containing only the extracted values. Use null for any values that cannot be determined.
   Example response:
@@ -52,25 +52,25 @@ const recoverWalletSchema = z.object({
   ): Promise<RecoverWalletContent> {
     // Compose the current state (or create one based on the message)
     const currentState = state || (await runtime.composeState(message));
-  
+
     // Compose a context to drive the object geSneration.
-    const context = composeContext({
+    const context = composePromptFromState({
       state: currentState,
       template: recoverWalletTemplate,
     });
-  
+
     // Generate an object using the defined schema.
-    const result = await generateObject({
-      runtime,
-      context,
-      schema: recoverWalletSchema,
-      modelClass: ModelClass.SMALL,
+     const result = await runtime.useModel(ModelClass.SMALL, {
+       runtime,
+       context,
+       schema: recoverWalletSchema,
     });
-  
-    let passwordData = result.object;
+     const content = await parseKeyValueXml(result);
+
+    let passwordData = content?.object;
     if (!passwordData) {
       // If the generated object is undefined, cast the result to ensure password extraction.
-      passwordData = result as unknown as { password: string };
+      passwordData = content as unknown as { password: string };
     }
 
     let recoverWalletContent: RecoverWalletContent = passwordData as RecoverWalletContent;
@@ -83,7 +83,7 @@ const recoverWalletSchema = z.object({
   }
 
 
-  
+
 export default {
     name: "RECOVER_TON_WALLET",
     similes: ["IMPORT_TON_WALLET", "RECOVER_WALLET"],
@@ -183,4 +183,4 @@ Please store it securely.`,
             },
         ],
     ],
-}; 
+};

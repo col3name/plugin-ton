@@ -1,14 +1,14 @@
 // pool creation, liquidity provisioning, and management
 
 import {
-  composeContext,
+  composePromptFromState,
+  parseKeyValueXml,
+  ModelType as ModelClass,
   Content,
   elizaLogger,
-  generateObject,
   HandlerCallback,
   IAgentRuntime,
   Memory,
-  ModelClass,
   State,
 } from "@elizaos/core";
 import {
@@ -164,15 +164,15 @@ export class DexAction {
     const contract = walletClient.open(this.walletProvider.wallet);
     const seqno = await contract.getSeqno();
     elizaLogger.debug(`Current wallet seqno: ${seqno}`);
-    
+
     const jettonDeposits = [];
     if (params.tokenA) {
       elizaLogger.debug(`Adding token A to jetton deposits: ${params.tokenA}, amount: ${params.amountA}`);
-      
+
       try {
         const tokenAddress = Address.parse(params.tokenA);
         elizaLogger.debug(`Token A address parsed successfully: ${tokenAddress.toString()}`);
-        
+
         jettonDeposits.push({
           jetton: new JettonMaster(tokenAddress),
           amount: params.amountA,
@@ -183,14 +183,14 @@ export class DexAction {
         throw new Error(`Invalid token A address: ${params.tokenA}. Error: ${error.message}`);
       }
     }
-    
+
     if (params.tokenB) {
       elizaLogger.debug(`Adding token B to jetton deposits: ${params.tokenB}, amount: ${params.amountB}`);
-      
+
       try {
         const tokenAddress = Address.parse(params.tokenB);
         elizaLogger.debug(`Token B address parsed successfully: ${tokenAddress.toString()}`);
-        
+
         jettonDeposits.push({
           jetton: new JettonMaster(tokenAddress),
           amount: params.amountB,
@@ -202,7 +202,7 @@ export class DexAction {
       }
     }
 
-    elizaLogger.debug(`Final jetton deposits configuration:`, 
+    elizaLogger.debug(`Final jetton deposits configuration:`,
       jettonDeposits.map((jd, idx) => ({
         index: idx,
         address: jd.jetton.address.toString(),
@@ -224,7 +224,7 @@ export class DexAction {
             isTon: params.isTon,
             tonAmount: params.tonAmount
           });
-          
+
           elizaLogger.debug(`Calling DEX provider createPool method for ${params.dex}`);
           const createPoolResult = await this.dexProvider.createPool({
             dex: params.dex,
@@ -245,7 +245,7 @@ export class DexAction {
             isTon: params.isTon,
             tonAmount: params.tonAmount
           });
-          
+
           elizaLogger.debug(`Calling DEX provider depositLiquidity method for ${params.dex}`);
           const depositResult = await this.dexProvider.depositLiquidity({
             dex: params.dex,
@@ -266,7 +266,7 @@ export class DexAction {
             isTon: params.isTon,
             amount: params.liquidity
           });
-          
+
           elizaLogger.debug(`Calling DEX provider withdrawLiquidity method for ${params.dex}`);
           const withdrawResult = await this.dexProvider.withdrawLiquidity({
             dex: params.dex,
@@ -283,7 +283,7 @@ export class DexAction {
             pool: params.pool,
             feeClaimAmount: params.liquidity
           });
-          
+
           elizaLogger.debug(`Calling DEX provider claimFees method for ${params.dex}`);
           const claimResult = await this.dexProvider.claimFees({
             dex: params.dex,
@@ -297,11 +297,11 @@ export class DexAction {
       elizaLogger.debug(`Waiting for transaction confirmation (seqno: ${seqno})...`);
       await waitSeqnoContract(seqno, contract);
       elizaLogger.debug("Transaction confirmed successfully");
-      
+
       const state = await walletClient.getContractState(this.walletProvider.wallet.address);
       const txHash = base64ToHex(state.lastTransaction.hash);
       elizaLogger.debug(`Transaction hash: ${txHash}`);
-      
+
       return txHash;
     } catch (error) {
       elizaLogger.error("Error executing DEX operation:", error);
@@ -312,41 +312,41 @@ export class DexAction {
         tokenB: params.tokenB,
         isTon: params.isTon
       });
-      
+
       // Enhanced error logging
       if (error.message && error.message.includes("exit_code:")) {
         const exitCodeMatch = error.message.match(/exit_code: (-?\d+)/);
         const exitCode = exitCodeMatch ? exitCodeMatch[1] : "unknown";
         elizaLogger.error(`DEX operation failed with exit code: ${exitCode}`);
-        
+
         if (exitCode === "-13") {
           elizaLogger.error("Exit code -13 typically indicates insufficient balance, non-existent pool, or incorrect parameters");
         }
       }
-      
+
       if (error.stack) {
         elizaLogger.error("Error stack trace:", error.stack);
       }
-      
+
       throw new Error(`DEX operation failed: ${error.message}`);
     }
   }
 
   async run(params: DexActionContent): Promise<string> {
     elizaLogger.debug(`Starting DEX operation: ${params.operation} on ${params.dex}`);
-    
+
     // Check if the operation is supported by the selected DEX
     const supportedMethods = this.dexProvider.getAllDexesAndSupportedMethods()
       .find(dex => dex.dex === params.dex.toUpperCase())?.supportedMethods || [];
-    
+
     elizaLogger.debug(`DEX ${params.dex} supported methods:`, supportedMethods);
-    
+
     if (!supportedMethods.includes(params.operation)) {
       const error = `Operation ${params.operation} is not supported by ${params.dex}`;
       elizaLogger.error(error);
       throw new Error(error);
     }
-    
+
     const result = await this.executeOperation(params);
     elizaLogger.debug(`DEX operation completed successfully with hash: ${result}`);
     return result;
@@ -365,22 +365,23 @@ const buildDexActionDetails = async (
   if (!currentState) {
     currentState = (await runtime.composeState(message)) as State;
   } else {
-    currentState = await runtime.updateRecentMessageState(currentState);
+    currentState = await runtime.composeState(message, ['RECENT_MESSAGES']);
   }
 
-  const actionContext = composeContext({
+  const actionContext = composePromptFromState({
     state,
     template: dexTemplate,
   });
 
-  const content = await generateObject({
+  const result = await runtime.useModel(ModelClass.SMALL, {
     runtime,
     context: actionContext,
     schema: dexActionSchema,
-    modelClass: ModelClass.SMALL,
   });
 
-  return content.object as DexActionContent;
+  const content = await parseKeyValueXml(result);
+
+  return content?.object as DexActionContent;
 };
 
 export default {
@@ -400,18 +401,18 @@ export default {
       elizaLogger.debug("Building DEX action details from user input...");
       const dexActionDetails = await buildDexActionDetails(runtime, message, state);
       elizaLogger.debug("DEX action details extracted:", dexActionDetails);
-      
+
       elizaLogger.debug("Initializing wallet provider...");
       const walletProvider = await initWalletProvider(runtime);
       elizaLogger.debug(`Wallet initialized with address: ${walletProvider.wallet.address.toString()}`);
-      
+
       elizaLogger.debug("Initializing DEX provider...");
       const dexProvider = new DexProvider(walletProvider);
       elizaLogger.debug("Available DEXes:", dexProvider.getAllDexesAndSupportedMethods());
-      
+
       elizaLogger.debug("Creating DEX action instance...");
       const action = new DexAction(walletProvider, dexProvider);
-      
+
       elizaLogger.debug(`Executing DEX operation: ${dexActionDetails.operation} on ${dexActionDetails.dex}...`);
       const hash = await action.run(dexActionDetails);
       elizaLogger.debug(`DEX operation completed with hash: ${hash}`);
@@ -426,7 +427,7 @@ export default {
 
         const responseText = `Successfully ${operationMap[dexActionDetails.operation]}. Transaction hash: ${hash}`;
         elizaLogger.debug(`Sending response to user: ${responseText}`);
-        
+
         callback({
           text: responseText,
           content: {

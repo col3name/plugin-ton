@@ -1,24 +1,23 @@
 import {
-    composeContext,
-    ModelClass,
+    composePromptFromState,
+    ModelType as ModelClass,
     type IAgentRuntime,
     type Memory,
     type State,
-
     generateText,
 } from "@elizaos/core";
 
 export async function replaceLastMemory(
-    runtime: IAgentRuntime, 
-    state: State, 
+    runtime: IAgentRuntime,
+    state: State,
     template:string
 ) : Promise<Memory> {
 
     const memory = state.recentMessagesData[0]
 
     await runtime.messageManager.removeMemory(memory.id);
-    
-    const responseContext = composeContext({
+
+    const responseContext = composePromptFromState({
         state,
         template
     });
@@ -46,13 +45,13 @@ export async function replaceLastMemory(
 }
 
 export async function addMemory(
-    runtime: IAgentRuntime, 
-    state: State, 
-    memory: Memory, 
+    runtime: IAgentRuntime,
+    state: State,
+    memory: Memory,
     template:string
 ) : Promise<Memory> {
 
-    const responseContext = composeContext({
+    const responseContext = composePromptFromState({
         state,
         template
     });

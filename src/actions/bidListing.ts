@@ -1,8 +1,8 @@
 import {
     elizaLogger,
-    composeContext,
-    generateObject,
-    ModelClass,
+    composePromptFromState,
+    parseKeyValueXml,
+    ModelType as ModelClass,
     type IAgentRuntime,
     type Memory,
     type State,
@@ -67,17 +67,17 @@ import { toNano } from "@ton/ton";
     message: Memory,
     state: State
   ): Promise<BidAuctionContent> => {
-    const context = composeContext({
+    const context = composePromptFromState({
       state,
       template: bidAuctionTemplate,
     });
-    const content = await generateObject({
+    const result = await runtime.useModel(ModelClass.SMALL, {
       runtime,
       context,
       schema: bidAuctionSchema as any,
-      modelClass: ModelClass.SMALL,
     });
-    return content.object as any;
+    const content = parseKeyValueXml(result);
+    return content?.object as any;
   };
 
   /**

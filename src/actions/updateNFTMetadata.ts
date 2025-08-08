@@ -1,8 +1,8 @@
 import {
   elizaLogger,
-  composeContext,
-  generateObject,
-  ModelClass,
+  composePromptFromState,
+  parseKeyValueXml,
+  ModelType as ModelClass,
   type IAgentRuntime,
   type Memory,
   type State,
@@ -100,7 +100,7 @@ Extract and output only the values as a JSON markdown block.`;
 
 function isUpdateNFTMetadataContent(content: Content): content is UpdateNFTMetadataContent {
   return (
-    typeof content.nftAddress === "string" && 
+    typeof content.nftAddress === "string" &&
     typeof content.storage === "string" &&
     (content.storage === "prompt" || content.storage === "file")
   );
@@ -115,19 +115,19 @@ const buildUpdateDetails = async (
   message: Memory,
   state: State
 ): Promise<UpdateNFTMetadataContent> => {
-  const updateContext = composeContext({
+  const updateContext = composePromptFromState({
     state,
     template: updateNFTMetadataTemplate,
   });
 
-  const content = await generateObject({
+  const result = await runtime.useModel(ModelClass.SMALL, {
     runtime,
     context: updateContext,
     schema: updateNFTMetadataSchema,
-    modelClass: ModelClass.SMALL,
   });
+  const content = await parseKeyValueXml(result);
 
-  return content.object as UpdateNFTMetadataContent;
+  return content?.object as UpdateNFTMetadataContent;
 };
 
 /**
@@ -146,18 +146,18 @@ class UpdateNFTMetadataAction {
   private async uploadContent(params: UpdateNFTMetadataContent): Promise<{ metadataIpfsHash: string, imagesIpfsHash?: string }> {
     let metadataIpfsHash: string;
     let imagesIpfsHash: string | undefined;
-    
+
     if (params.storage === "file") {
       if (!params.imagesFolderPath || !params.metadataFolderPath) {
         throw new Error("Image and metadata folder paths are required for file storage");
       }
-      
+
       elizaLogger.log("Started uploading images to IPFS...");
       imagesIpfsHash = await uploadFolderToIPFS(params.imagesFolderPath);
       elizaLogger.log(
         `Successfully uploaded the pictures to ipfs: https://gateway.pinata.cloud/ipfs/${imagesIpfsHash}`
       );
-    
+
       elizaLogger.log("Started uploading metadata files to IPFS...");
       await updateMetadataFiles(params.metadataFolderPath, imagesIpfsHash);
       metadataIpfsHash = await uploadFolderToIPFS(params.metadataFolderPath);
@@ -172,7 +172,7 @@ class UpdateNFTMetadataAction {
       metadataIpfsHash = await uploadJSONToIPFS(params.metadata);
       return { metadataIpfsHash };
     }
-    
+
     throw new Error("Invalid storage type");
   }
 
@@ -237,7 +237,7 @@ class UpdateNFTMetadataAction {
       secretKey: this.walletProvider.keypair.secretKey,
       messages: [updateMessage],
     });
-    
+
     await contract.send(transfer);
     elizaLogger.log("Transaction sent, waiting for confirmation...");
 
@@ -252,12 +252,12 @@ class UpdateNFTMetadataAction {
 
   async update(params: UpdateNFTMetadataContent): Promise<string> {
     const { metadataIpfsHash } = await this.uploadContent(params);
-    
+
     // Set the new metadata URLs if not already provided
     if (!params.newCollectionMeta) {
       params.newCollectionMeta = `ipfs://${metadataIpfsHash}/collection.json`;
     }
-    
+
     if (!params.newNftCommonMeta) {
       params.newNftCommonMeta = `ipfs://${metadataIpfsHash}/`;
     }
@@ -296,9 +296,9 @@ export default {
     try {
       // Set default paths if using file storage
       if (updateDetails.storage === "file") {
-        updateDetails.imagesFolderPath = runtime.getSetting("TON_NFT_IMAGES_FOLDER") || 
+        updateDetails.imagesFolderPath = runtime.getSetting("TON_NFT_IMAGES_FOLDER") ||
           path.join(process.cwd(), "ton_nft_images");
-        updateDetails.metadataFolderPath = runtime.getSetting("TON_NFT_METADATA_FOLDER") || 
+        updateDetails.metadataFolderPath = runtime.getSetting("TON_NFT_METADATA_FOLDER") ||
           path.join(process.cwd(), "ton_nft_metadata");
       }
 
@@ -363,4 +363,4 @@ export default {
       },
     ],
   ],
-}; 
+};

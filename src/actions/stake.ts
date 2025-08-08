@@ -1,10 +1,10 @@
 import {
     elizaLogger,
-    composeContext,
     type Content,
     type HandlerCallback,
-    ModelClass,
-    generateObject,
+    composePromptFromState,
+    parseKeyValueXml,
+    ModelType as ModelClass,
     type IAgentRuntime,
     type Memory,
     type State,
@@ -75,7 +75,7 @@ const buildStakeDetails = async (
     if (!state) {
         state = (await runtime.composeState(message)) as State;
     } else {
-        state = await runtime.updateRecentMessageState(state);
+        state = await runtime.composeState(message, ['RECENT_MESSAGES']);
     }
     // Define the schema for the expected output
     const stakeSchema = z.object({
@@ -84,20 +84,20 @@ const buildStakeDetails = async (
     });
 
     // Compose staking context
-    const stakeContext = composeContext({
+    const stakeContext = composePromptFromState({
         state,
         template: stakeTemplate,
     });
 
     // Generate stake content with the schema
-    const content = await generateObject({
+    const result = await runtime.useModel(ModelClass.SMALL, {
         runtime,
         context: stakeContext,
         schema: stakeSchema,
-        modelClass: ModelClass.SMALL,
     });
+    const content = await parseKeyValueXml(result);
 
-    return content.object as StakeContent;
+    return content?.object as StakeContent;
 };
 
 export default {
