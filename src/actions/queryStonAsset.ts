@@ -37,23 +37,20 @@ function isQueryAssetContent(content: Content): content is IQueryAssetContent {
 const queryAssetSchema = z.object({
     token: z.string().min(1, { message: "A token is required to fetch information." }),
 });
-
-const queryAssetTemplate = `Respond with a JSON markdown block containing only the extracted values. Use null for any values that cannot be determined.
+const queryAssetTemplate = `Respond with an XML block containing only the extracted values. Use key-value pairs.
+Use <null/> for any values that cannot be determined.
 
 Example response:
-\`\`\`json
-{
-    "token": {{dynamic}},
-}
-\`\`\`
+<response>
+    <token>{{dynamic}}</token>
+</response>
 
 {{recentMessages}}
 
 Given the recent messages, extract the following information about the requested token transfer:
-- token 
+- token
 
-Respond with a JSON markdown block containing only the extracted values.`;
-
+Respond with an XML block containing only the extracted values. Use key-value pairs.`;
 
 const buildQueryAssetDetails = async (
     runtime: IAgentRuntime,
@@ -78,7 +75,7 @@ const buildQueryAssetDetails = async (
     });
 
     // Generate swap content with the schema
-    const result = await runtime.useModel(ModelClass.SMALL, {
+    const result = await runtime.useModel(ModelClass.TEXT_SMALL, {
         runtime,
         context: queryAssetContext,
         schema: queryAssetSchema,
@@ -156,7 +153,7 @@ export default {
             const response = await generateText({
                 runtime: runtime,
                 context: responseContext,
-                modelClass: ModelClass.SMALL,
+                modelClass: ModelClass.TEXT_SMALL,
             });
 
             callback?.({
@@ -192,7 +189,7 @@ export default {
             const response = await generateText({
                 runtime: runtime,
                 context: responseContext,
-                modelClass: ModelClass.SMALL,
+                modelClass: ModelClass.TEXT_SMALL,
             });
 
             await callback?.({

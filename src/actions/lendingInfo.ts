@@ -61,25 +61,23 @@ type LendingData = LendingDataActive | LendingDataInactive;
  * Template guiding the extraction of user data parameters for getting of lending protocol info.
  * The output should be a JSON markdown block similar to:
  *
- * {
- *   "userAddress": "EQCGScrZe1xbyWqWDvdI6mzP-GAcAWFv6ZXuaJOuSqemxku4"
- * }
+ * <response>
+ *     <userAddress>EQCGScrZe1xbyWqWDvdI6mzP-GAcAWFv6ZXuaJOuSqemxku4</userAddress>
+ * </response>
  */
-const getLendingInfoTemplate = `Respond with a JSON markdown block containing only the extracted values. Use null for any values that cannot be determined.
+const getLendingInfoTemplate = `Respond with an XML block containing only the extracted values. Use key-value pairs. Use <null/> for any values that cannot be determined.
 
 Example response:
-\`\`\`json
-{
-    "userAddress": "EQCGScrZe1xbyWqWDvdI6mzP-GAcAWFv6ZXuaJOuSqemxku4"
-}
-\`\`\`
+<response>
+    <userAddress>EQCGScrZe1xbyWqWDvdI6mzP-GAcAWFv6ZXuaJOuSqemxku4</userAddress>
+</response>
 
 {{recentMessages}}
 
 Given the recent messages, extract the following information about the requested lending info:
 - User address
 
-Respond with a JSON markdown block containing only the extracted values.`;
+Respond with an XML block containing only the extracted values. Use key-value pairs.`;
 
 function createLendingInfoResponseText(
     lendingInfo: LendingData,
@@ -187,7 +185,7 @@ const buildGetLendingInfo = async (
         template: getLendingInfoTemplate,
     });
 
-    const result = await runtime.useModel(ModelClass.SMALL, {
+    const result = await runtime.useModel(ModelClass.TEXT_SMALL, {
         runtime,
         context: getLendingInfoContext,
         schema: getLendingInfoSchema,

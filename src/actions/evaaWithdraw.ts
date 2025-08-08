@@ -59,17 +59,15 @@ function isWithdrawContent(content: any): content is WithdrawContent {
     );
 }
 
-const withdrawTemplate = `Respond with a JSON markdown block containing only the extracted values. Use null for any values that cannot be determined.
+const withdrawTemplate = `Respond with an XML block containing only the extracted values. Use key-value pairs. Use <null/> for any values that cannot be determined.
 
 Example response:
-\`\`\`json
-{
-    "amount": "1",
-    "asset": "USDT" | "USDC" | "TON",
-    "includeUserCode": true,
-    "showInterest": true
-}
-\`\`\`
+<response>
+    <amount>1</amount>
+    <asset>USDT | USDC | TON</asset>
+    <includeUserCode>true</includeUserCode>
+    <showInterest>true</showInterest>
+</response>
 
 {{recentMessages}}
 
@@ -80,7 +78,7 @@ Given the recent messages, extract the following information about the requested
 - Whether to show interest calculation (optional)
 - Make sure to remove \`\`\`json and \`\`\` from the response
 
-Respond with a JSON markdown block containing only the extracted values.`;
+Respond with an XML block containing only the extracted values. Use key-value pairs.`;
 
 interface EvaaAsset {
     name: string;

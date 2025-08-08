@@ -56,18 +56,17 @@ function isCreateListingContent(
   );
 }
 
-const createListingTemplate = `Respond with a JSON markdown block containing only the extracted values.
+const createListingTemplate = `Respond with an XML block containing only the extracted values. Use key-value pairs. Use <null/> for any values that cannot be determined.
+
 Example response:
-\`\`\`json
-{
-  "nftAddress": "<NFT address for listing>",
-  "fullPrice": "<Full price in TON>"
-}
-\`\`\`
+<response>
+    <nftAddress>&lt;NFT address for listing&gt;</nftAddress>
+    <fullPrice>&lt;Full price in TON&gt;</fullPrice>
+</response>
 
 {{recentMessages}}
 
-Respond with a JSON markdown block containing only the extracted values.`;
+Respond with an XML block containing only the extracted values. Use key-value pairs.`;
 
 /**
  * Helper function to build create listing parameters.
@@ -81,7 +80,7 @@ const buildCreateListingData = async (
     state,
     template: createListingTemplate,
   });
-  const result = await runtime.useModel(ModelClass.SMALL,{
+  const result = await runtime.useModel(ModelClass.TEXT_SMALL,{
     runtime,
     context,
     schema: createListingSchema as any,

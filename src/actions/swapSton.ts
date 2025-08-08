@@ -58,16 +58,15 @@ const swapSchema = z.object({
     tokenOut: z.string().min(1, { message: "Second token is required." }),
 }).strict();
 
-const swapTemplate = `Respond with a JSON markdown block containing only the extracted values. Use null for any values that cannot be determined.
+const swapTemplate = `Respond with an XML block containing only the extracted values. Use key-value pairs.
+Use <null/> for any values that cannot be determined.
 
 Example response:
-\`\`\`json
-{
-    "tokenIn": "TON",
-    "amountIn": "1",
-    "tokenOut": "USDC"
-}
-\`\`\`
+<response>
+  <tokenIn>TON</tokenIn>
+  <amountIn>1</amountIn>
+  <tokenOut>USDC</tokenOut>
+</response>
 
 {{recentMessages}}
 
@@ -76,7 +75,7 @@ Given the recent messages, extract the following information about the requested
 - Amount to transfer
 - Destination token
 
-Respond with a JSON markdown block containing only the extracted values.`;
+Respond with an XML block containing only the extracted values. Use key-value pairs.`;
 
 
 const finishSwapTemplate = `
@@ -270,7 +269,7 @@ const buildSwapDetails = async (
     });
 
     // Generate swap content with the schema
-    const result = await runtime.useModel(ModelClass.SMALL, {
+    const result = await runtime.useModel(ModelClass.TEXT_SMALL, {
         runtime,
         context: swapContext,
         schema: swapSchema,
@@ -309,7 +308,7 @@ const buildFinishSwapDetails = async (
     return await generateTrueOrFalse({
         runtime,
         context: swapIsToBeFinished,
-        modelClass: ModelClass.SMALL,
+        modelClass: ModelClass.TEXT_SMALL,
     });
 };
 

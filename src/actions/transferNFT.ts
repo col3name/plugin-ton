@@ -39,19 +39,18 @@ const transferNFTSchema = z.object({
 
 /**
  * Template string to guide the AI agent (if needed).
- */
-const transferNFTTemplate = `Respond with a JSON markdown block containing only the extracted values.
-Example:
-\`\`\`json
-{
-  "nftAddress": "0QDIUnzAEsgHLL7YSrvm_u7OYSKw93AQbtdidRdcbm7tQep5",
-  "newOwner": "EQCGScrZe1xbyWqWDvdI6mzP-GAcAWFv6ZXuaJOuSqemxku4"
-}
-\`\`\`
+ */const transferNFTTemplate = `Respond with an XML block containing only the extracted values. Use key-value pairs.
+Use <null/> for any values that cannot be determined.
+
+Example response:
+<response>
+  <nftAddress>0QDIUnzAEsgHLL7YSrvm_u7OYSKw93AQbtdidRdcbm7tQep5</nftAddress>
+  <newOwner>EQCGScrZe1xbyWqWDvdI6mzP-GAcAWFv6ZXuaJOuSqemxku4</newOwner>
+</response>
 
 {{recentMessages}}
 
-Extract and output only the values as a JSON markdown block.`;
+Extract and output only the values as an XML block containing key-value pairs.`;
 
 /**
  * The TransferNFTAction class encapsulates the logic for transferring NFT ownership.
@@ -158,7 +157,7 @@ const buildTransferNFTContent = async (
     });
 
     // Generate transfer content with the schema
-    const result = await runtime.useModel(ModelClass.SMALL, {
+    const result = await runtime.useModel(ModelClass.TEXT_SMALL, {
         runtime,
         context: transferContext,
         schema: transferNFTSchema,

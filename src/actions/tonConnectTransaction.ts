@@ -46,31 +46,29 @@ function isTonConnectSendTransactionContent(
             typeof message.amount === "string"
     );
 }
-
-const tonConnectSendTransactionTemplate = `Respond with a JSON markdown block containing only the extracted values. Use null for any values that cannot be determined.
+const tonConnectSendTransactionTemplate = `Respond with an XML block containing only the extracted values. Use key-value pairs.
+Use <null/> for any values that cannot be determined.
 
 Example response:
-\`\`\`json
-{
-    "validUntil": 1234567890,
-    "network": "MAINNET",
-    "from": "0:abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
-    "messages": [
-        {
-            "address": "EQCGScrZe1xbyWqWDvdI6mzP-GAcAWFv6ZXuaJOuSqemxku4",
-            "amount": "1000000000",
-            "stateInit": "te6cckEBAQEAAgAAAEysuc0=",
-            "payload": "te6cckEBAQEAAgAAAEysuc0="
-        },
-        {
-            "address": "EQDmnxDMhId6v1Ofg_h5KR5coWlFG6e86Ro3pc7Tq4CA0-Jn",
-            "amount": "2000000000",
-            "stateInit": null,
-            "payload": null
-        }
-    ]
-}
-\`\`\`
+<response>
+  <validUntil>1234567890</validUntil>
+  <network>MAINNET</network>
+  <from>0:abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890</from>
+  <messages>
+    <message>
+      <address>EQCGScrZe1xbyWqWDvdI6mzP-GAcAWFv6ZXuaJOuSqemxku4</address>
+      <amount>1000000000</amount>
+      <stateInit>te6cckEBAQEAAgAAAEysuc0=</stateInit>
+      <payload>te6cckEBAQEAAgAAAEysuc0=</payload>
+    </message>
+    <message>
+      <address>EQDmnxDMhId6v1Ofg_h5KR5coWlFG6e86Ro3pc7Tq4CA0-Jn</address>
+      <amount>2000000000</amount>
+      <stateInit><null/></stateInit>
+      <payload><null/></payload>
+    </message>
+  </messages>
+</response>
 
 {{recentMessages}}
 
@@ -83,7 +81,7 @@ Given the recent messages, extract the following information about the requested
 - Optional from address
 - Optional validUntil timestamp (in unix seconds)
 
-Respond with a JSON markdown block containing only the extracted values.`;
+Respond with an XML block containing only the extracted values. Use key-value pairs.`;
 
 export class TonConnectSendTransactionAction {
     async sendTransaction(
@@ -149,7 +147,7 @@ const buildTonConnectSendTransactionDetails = async (
         template: tonConnectSendTransactionTemplate,
     });
 
-    const result = await runtime.useModel(ModelClass.SMALL, {
+    const result = await runtime.useModel(ModelClass.TEXT_SMALL, {
         runtime,
         context: transactionContext,
         schema: transactionSchema,

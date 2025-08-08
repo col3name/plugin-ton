@@ -46,18 +46,16 @@ function isCancelListingContent(
 ): content is CancelListingContent {
   return typeof content.nftAddress === "string";
 }
+const cancelListingTemplate = `Respond with an XML block containing only the extracted values. Use key-value pairs. Use <null/> for any values that cannot be determined.
 
-const cancelListingTemplate = `Respond with a JSON markdown block containing only the extracted values.
 Example response:
-\`\`\`json
-{
-  "nftAddress": "<NFT address to cancel listing>"
-}
-\`\`\`
+<response>
+    <nftAddress>&lt;NFT address to cancel listing&gt;</nftAddress>
+</response>
 
 {{recentMessages}}
 
-Respond with a JSON markdown block containing only the extracted values.`;
+Respond with an XML block containing only the extracted values. Use key-value pairs.`;
 
 /**
  * Helper function to build cancel listing parameters.

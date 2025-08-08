@@ -65,38 +65,43 @@ const updateNFTMetadataSchema = z.object({
   royaltyAddress: z.string().optional(),
 });
 
+const updateNFTMetadataTemplate = `Respond with an XML block containing only the extracted values. Use key-value pairs.
+Use <null/> for any values that cannot be determined.
 
-const updateNFTMetadataTemplate = `Respond with a JSON markdown block containing only the extracted values.
 Example response for NFT with metadata in prompt:
-\`\`\`json
-{
-    "nftAddress": "EQCGScrZe1xbyWqWDvdI6mzP-GAcAWFv6ZXuaJOuSqemxku4",
-    "storage": "prompt",
-    "royaltyPercent": 0.05,
-    "royaltyAddress": "EQCGScrZe1xbyWqWDvdI6mzP-GAcAWFv6ZXuaJOuSqemxku4",
-    "metadata": {
-        "name": "Rare NFT Artwork",
-        "description": "A unique NFT artwork minted on TON",
-        "image": "https://example.com/nft-image.png"
-    }
-}
-\`\`\`
+<response>
+  <nftAddress>EQCGScrZe1xbyWqWDvdI6mzP-GAcAWFv6ZXuaJOuSqemxku4</nftAddress>
+  <storage>prompt</storage>
+  <royaltyPercent>0.05</royaltyPercent>
+  <royaltyAddress>EQCGScrZe1xbyWqWDvdI6mzP-GAcAWFv6ZXuaJOuSqemxku4</royaltyAddress>
+  <metadata>
+    <name>Rare NFT Artwork</name>
+    <description>A unique NFT artwork minted on TON</description>
+    <image>https://example.com/nft-image.png</image>
+  </metadata>
+</response>
 
 Example response for file-based storage:
-\`\`\`json
-{
-    "nftAddress": "EQCGScrZe1xbyWqWDvdI6mzP-GAcAWFv6ZXuaJOuSqemxku4",
-    "storage": "file",
-    "imagesFolderPath": "path/to/images",
-    "metadataFolderPath": "path/to/metadata",
-    "royaltyPercent": 0.05,
-    "royaltyAddress": "EQCGScrZe1xbyWqWDvdI6mzP-GAcAWFv6ZXuaJOuSqemxku4"
-}
-\`\`\`
+<response>
+  <nftAddress>EQCGScrZe1xbyWqWDvdI6mzP-GAcAWFv6ZXuaJOuSqemxku4</nftAddress>
+  <storage>file</storage>
+  <imagesFolderPath>path/to/images</imagesFolderPath>
+  <metadataFolderPath>path/to/metadata</metadataFolderPath>
+  <royaltyPercent>0.05</royaltyPercent>
+  <royaltyAddress>EQCGScrZe1xbyWqWDvdI6mzP-GAcAWFv6ZXuaJOuSqemxku4</royaltyAddress>
+</response>
 
 {{recentMessages}}
 
-Extract and output only the values as a JSON markdown block.`;
+Given the recent messages, extract the following information about the requested NFT metadata update:
+- NFT address
+- Storage option ("prompt" or "file")
+- For "prompt" storage: metadata (name, description, image)
+- For "file" storage: images folder path and metadata folder path
+- Royalty percent (optional)
+- Royalty address (optional)
+
+Respond with an XML block containing only the extracted values. Use key-value pairs.`;
 
 function isUpdateNFTMetadataContent(content: Content): content is UpdateNFTMetadataContent {
   return (
@@ -120,7 +125,7 @@ const buildUpdateDetails = async (
     template: updateNFTMetadataTemplate,
   });
 
-  const result = await runtime.useModel(ModelClass.SMALL, {
+  const result = await runtime.useModel(ModelClass.TEXT_SMALL, {
     runtime,
     context: updateContext,
     schema: updateNFTMetadataSchema,

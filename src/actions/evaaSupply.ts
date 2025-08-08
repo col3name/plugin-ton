@@ -59,28 +59,25 @@ function isSupplyContent(content: any): content is SupplyContent {
         (content.showInterest === undefined || typeof content.showInterest === "boolean")
     );
 }
-
-const lendTemplate = `Respond with a JSON markdown block containing only the extracted values. Use null for any values that cannot be determined.
+const lendTemplate = `Respond with an XML block containing only the extracted values. Use key-value pairs. Use <null/> for any values that cannot be determined.
 
 Example response:
-\`\`\`json
-{
-    "amount": "1",
-    "asset": "USDT" | "USDC" | "TON",
-    "includeUserCode": true,
-    "showInterest": true
-}
-\`\`\`
+<response>
+    <amount>1</amount>
+    <asset>USDT</asset>
+    <includeUserCode>true</includeUserCode>
+    <showInterest>true</showInterest>
+</response>
 
 {{recentMessages}}
 
 Given the recent messages, extract the following information about the requested lending operation:
 - Amount to supply
-- Asset to supply
-- Whether to include user code (optional)
+- Asset to supply (e.g., USDT, USDC, TON)
+- Whether to include user code (true or false; optional)
 - Make sure to remove \`\`\`json and \`\`\` from the response
 
-Respond with a JSON markdown block containing only the extracted values.`;
+Respond with an XML block containing only the extracted values. Use key-value pairs.`;
 
 interface EvaaAsset {
     name: string;

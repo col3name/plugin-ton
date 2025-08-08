@@ -156,29 +156,28 @@ function isAuctionInteractionContent(
   );
 }
 
-const auctionInteractionTemplate = `Respond with a JSON markdown block containing only the extracted values. Use null for any values that cannot be determined.
+const auctionInteractionTemplate = `Respond with an XML block containing only the extracted values. Use key-value pairs. Use <null/> for any values that cannot be determined.
 Example response:
-\`\`\`json
-{
-  "auctionAddress": "<Auction contract address>",
-  "auctionAction": "<getAuctionData|bid|stop|cancel|list|buy|changePrice|addValue|cancelOffer|getOfferData>",
-  "bidAmount": "<Bid amount in TON, required for 'bid' action>",
-  "senderAddress": "<Sender's TON address, required for actions other than 'getAuctionData'>",
-  "nftAddress": "<NFT address for listing>",
-  "fullPrice": "<Full price in TON>",
-  "marketplaceAddress": "<Marketplace address>",
-  "marketplaceFeeAddress": "<Fee recipient address>",
-  "marketplaceFeePercent": "<Marketplace fee percentage>",
-  "royaltyAddress": "<Royalty recipient address>",
-  "royaltyPercent": "<Royalty percentage>",
-  "newPrice": "<New price in TON>",
-  "additionalValue": "<Additional value for addValue action>"
-}
-\`\`\`
+<response>
+    <auctionAddress>&lt;Auction contract address&gt;</auctionAddress>
+    <auctionAction>&lt;getAuctionData|bid|stop|cancel|list|buy|changePrice|addValue|cancelOffer|getOfferData&gt;</auctionAction>
+    <bidAmount>&lt;Bid amount in TON, required for 'bid' action&gt;</bidAmount>
+    <senderAddress>&lt;Sender's TON address, required for actions other than 'getAuctionData'&gt;</senderAddress>
+    <nftAddress>&lt;NFT address for listing&gt;</nftAddress>
+    <fullPrice>&lt;Full price in TON&gt;</fullPrice>
+    <marketplaceAddress>&lt;Marketplace address&gt;</marketplaceAddress>
+    <marketplaceFeeAddress>&lt;Fee recipient address&gt;</marketplaceFeeAddress>
+    <marketplaceFeePercent>&lt;Marketplace fee percentage&gt;</marketplaceFeePercent>
+    <royaltyAddress>&lt;Royalty recipient address&gt;</royaltyAddress>
+    <royaltyPercent>&lt;Royalty percentage&gt;</royaltyPercent>
+    <newPrice>&lt;New price in TON&gt;</newPrice>
+    <additionalValue>&lt;Additional value for addValue action&gt;</additionalValue>
+</response>
 
 {{recentMessages}}
 
-Respond with a JSON markdown block containing only the extracted values.`;
+Respond with an XML block containing only the extracted values. Use key-value pairs. Use <null/> for any values that cannot be determined.`;
+
 
 /**
  * Helper function to build auction interaction parameters.
@@ -192,7 +191,7 @@ const buildAuctionInteractionData = async (
     state,
     template: auctionInteractionTemplate,
   });
-  const result = await runtime.useModel(ModelClass.SMALL, {
+  const result = await runtime.useModel(ModelClass.TEXT_SMALL, {
     runtime,
     context,
     schema: auctionInteractionSchema as any,

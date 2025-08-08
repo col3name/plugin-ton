@@ -21,20 +21,19 @@ function isPoolInfoContent(content: Content): content is PoolInfoContent {
     return typeof content.poolId === "string";
 }
 
-const getPoolInfoTemplate = `Respond with a JSON markdown block containing only the extracted values. Use null for any values that cannot be determined.
+const getPoolInfoTemplate = `Respond with an XML block containing only the extracted values. Use key-value pairs. Use <null/> for any values that cannot be determined.
 
 Example response:
-\`\`\`json
-{
-    "poolId": string
-}
-\`\`\`
+<response>
+    <poolId>string</poolId>
+</response>
 
 {{recentMessages}}
 
 Given the recent messages, extract the pool identifier (TON address) for which to fetch staking pool information.
 
-Respond with a JSON markdown block containing only the extracted value.`;
+Respond with an XML block containing only the extracted values. Use key-value pairs.`;
+
 
 export class GetPoolInfoAction {
     constructor(private stakingProvider: IStakingProvider) {}
@@ -72,7 +71,7 @@ const buildPoolInfoDetails = async (
         template: getPoolInfoTemplate,
     });
 
-    const result = await runtime.useModel(ModelClass.SMALL, {
+    const result = await runtime.useModel(ModelClass.TEXT_SMALL, {
         runtime,
         context: poolInfoContext,
         schema: poolInfoSchema,

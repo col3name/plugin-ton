@@ -446,11 +446,11 @@ import {
       });
 
       // Generate transfer content with the schema
-      const result = await runtime.useModel(ModelClass.SMALL, {
+      const result = await runtime.useModel(ModelClass.TEXT_SMALL, {
           runtime,
           context: batchTransferContext,
           schema: batchTransferSchema,
-          modelClass: ModelClass.SMALL,
+          modelClass: ModelClass.TEXT_SMALL,
       });
       const content = await parseKeyValueXml(result);
 

@@ -122,54 +122,52 @@ function isPositionsContent(content: any): content is PositionsContent {
     );
 }
 
-export const positionsTemplate = `Respond with a JSON markdown block containing only the extracted values. Use null for any values that cannot be determined.
+export const positionsTemplate = `Respond with an XML block containing only the extracted values. Use key-value pairs. Use <null/> for any values that cannot be determined.
 
 Example response:
-\`\`\`json
-{
-    "positions": [
-        {
-            "assetId": "TON",
-            "principal": "0",
-            "borrowInterest": "0",
-            "borrowRate": "0",
-            "supplyInterest": "0",
-            "supplyRate": "0",
-            "annualInterestRate": "0",
-            "dailyInterestRate": "0",
-            "dailyInterest": "0",
-            "healthFactor": 0,
-            "liquidationThreshold": 0
-        },
-        {
-            "assetId": "USDT",
-            "principal": "0",
-            "borrowInterest": "0",
-            "borrowRate": "0",
-            "supplyInterest": "0",
-            "supplyRate": "0",
-            "annualInterestRate": "0",
-            "dailyInterestRate": "0",
-            "dailyInterest": "0",
-            "healthFactor": 0,
-            "liquidationThreshold": 0
-        },
-        {
-            "assetId": "USDC",
-            "principal": "0",
-            "borrowInterest": "0",
-            "borrowRate": "0",
-            "supplyInterest": "0",
-            "supplyRate": "0",
-            "annualInterestRate": "0",
-            "dailyInterestRate": "0",
-            "dailyInterest": "0",
-            "healthFactor": 0,
-            "liquidationThreshold": 0
-        }
-    ]
-}
-\`\`\`
+<response>
+  <positions>
+    <position>
+      <assetId>TON</assetId>
+      <principal>0</principal>
+      <borrowInterest>0</borrowInterest>
+      <borrowRate>0</borrowRate>
+      <supplyInterest>0</supplyInterest>
+      <supplyRate>0</supplyRate>
+      <annualInterestRate>0</annualInterestRate>
+      <dailyInterestRate>0</dailyInterestRate>
+      <dailyInterest>0</dailyInterest>
+      <healthFactor>0</healthFactor>
+      <liquidationThreshold>0</liquidationThreshold>
+    </position>
+    <position>
+      <assetId>USDT</assetId>
+      <principal>0</principal>
+      <borrowInterest>0</borrowInterest>
+      <borrowRate>0</borrowRate>
+      <supplyInterest>0</supplyInterest>
+      <supplyRate>0</supplyRate>
+      <annualInterestRate>0</annualInterestRate>
+      <dailyInterestRate>0</dailyInterestRate>
+      <dailyInterest>0</dailyInterest>
+      <healthFactor>0</healthFactor>
+      <liquidationThreshold>0</liquidationThreshold>
+    </position>
+    <position>
+      <assetId>USDC</assetId>
+      <principal>0</principal>
+      <borrowInterest>0</borrowInterest>
+      <borrowRate>0</borrowRate>
+      <supplyInterest>0</supplyInterest>
+      <supplyRate>0</supplyRate>
+      <annualInterestRate>0</annualInterestRate>
+      <dailyInterestRate>0</dailyInterestRate>
+      <dailyInterest>0</dailyInterest>
+      <healthFactor>0</healthFactor>
+      <liquidationThreshold>0</liquidationThreshold>
+    </position>
+  </positions>
+</response>
 
 {{recentMessages}}
 
@@ -187,7 +185,7 @@ Given the recent messages, extract the following information about the borrowed 
 - Liquidation threshold (if mentioned)
 - Make sure to remove \`\`\`json and \`\`\` from the response
 
-Respond with a JSON markdown block containing only the extracted values.`;
+Respond with an XML block containing only the extracted values. Use key-value pairs.`;
 
 interface EvaaAsset {
     name: string;

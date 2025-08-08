@@ -25,15 +25,14 @@ function isUnstakeContent(content: Content): content is UnstakeContent {
     );
 }
 
-const unstakeTemplate = `Respond with a JSON markdown block containing only the extracted values. Use null for any values that cannot be determined.
+const unstakeTemplate = `Respond with an XML block containing only the extracted values. Use key-value pairs.
+Use <null/> for any values that cannot be determined.
 
 Example response:
-\`\`\`json
-{
-    "poolId": "pool123",
-    "amount": "1.0"
-}
-\`\`\`
+<response>
+  <poolId>pool123</poolId>
+  <amount>1.0</amount>
+</response>
 
 {{recentMessages}}
 
@@ -41,7 +40,7 @@ Given the recent messages, extract the following information for unstaking TON:
 - Pool identifier (poolId)
 - Amount to unstake
 
-Respond with a JSON markdown block containing only the extracted values.`;
+Respond with an XML block containing only the extracted values. Use key-value pairs.`;
 
 export class UnstakeAction {
     constructor(private stakingProvider: IStakingProvider) {}
@@ -82,7 +81,7 @@ const buildUnstakeDetails = async (
         template: unstakeTemplate,
     });
 
-    const result = await runtime.useModel(ModelClass.SMALL, {
+    const result = await runtime.useModel(ModelClass.TEXT_SMALL, {
         runtime,
         context: unstakeContext,
         schema: unstakeSchema,

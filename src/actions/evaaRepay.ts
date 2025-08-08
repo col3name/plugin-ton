@@ -54,24 +54,21 @@ function isRepayContent(content: any): content is RepayContent {
     );
 }
 
-const repayTemplate = `Respond with a JSON markdown block containing only the extracted values. Use null for any values that cannot be determined.
+const repayTemplate = `Respond with an XML block containing only the extracted values. Use key-value pairs. Use <null/> for any values that cannot be determined.
 
 Example response:
-\`\`\`json
-{
-    "asset": "USDT" | "USDC" | "TON",
-    "includeUserCode": true
-}
-\`\`\`
+<response>
+    <asset>USDT</asset>
+    <includeUserCode>true</includeUserCode>
+</response>
 
 {{recentMessages}}
 
 Given the recent messages, extract the following information about the requested total repayment operation:
-- Asset to repay
-- Whether to include user code (optional)
-- Make sure to remove \`\`\`json and \`\`\` from the response
+- Asset to repay (e.g., USDT, USDC, TON)
+- Whether to include user code (true or false; optional)
 
-Respond with a JSON markdown block containing only the extracted values.`;
+Respond with an XML block containing only the extracted values. Use key-value pairs.`;
 
 interface EvaaAsset {
     name: string;

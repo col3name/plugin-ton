@@ -145,7 +145,7 @@ const buildJettonInteractionData = async (
   });
 
   try {
-    const result = await runtime.useModel(ModelClass.SMALL, {
+    const result = await runtime.useModel(ModelClass.TEXT_SMALL, {
       runtime,
       context,
       schema: jettonInteractionSchema as any,
@@ -160,24 +160,22 @@ const buildJettonInteractionData = async (
   }
 };
 
-const jettonInteractionTemplate = `Respond with a JSON markdown block containing only the extracted values. Use null for any values that cannot be determined.
+const jettonInteractionTemplate = `Respond with an XML block containing only the extracted values. Use key-value pairs. Use <null/> for any values that cannot be determined.
 Example response:
-\`\`\`json
-{
-  "jettonAction": "<deployMinter|mint|burn|transfer|getJettonData|getWalletData|changeOwner>",
-  "jettonMinterAddress": "<Jetton Minter contract address> (required for mint, burn, transfer, getJettonData, getWalletData, changeOwner)",
-  "jettonMasterAddress": "<Jetton Master contract address> (required for transfer)",
-  "jettonWalletAddress": "<Jetton Wallet contract address> (required for getWalletData)",
-  "amount": "<Amount of jettons to mint/burn/transfer>",
-  "recipientAddress": "<Recipient's TON address> (required transfer, optional for mint, burn)",
-  "metadata": "<Metadata for the jetton> (required for deployMinter)",
-  "newOwnerAddress": "<New owner's TON address> (required for changeOwner)",
-}
-\`\`\`
+<response>
+  <jettonAction>&lt;deployMinter|mint|burn|transfer|getJettonData|getWalletData|changeOwner&gt;</jettonAction>
+  <jettonMinterAddress>&lt;Jetton Minter contract address&gt; (required for mint, burn, transfer, getJettonData, getWalletData, changeOwner)</jettonMinterAddress>
+  <jettonMasterAddress>&lt;Jetton Master contract address&gt; (required for transfer)</jettonMasterAddress>
+  <jettonWalletAddress>&lt;Jetton Wallet contract address&gt; (required for getWalletData)</jettonWalletAddress>
+  <amount>&lt;Amount of jettons to mint/burn/transfer&gt;</amount>
+  <recipientAddress>&lt;Recipient's TON address&gt; (required transfer, optional for mint, burn)</recipientAddress>
+  <metadata>&lt;Metadata for the jetton&gt; (required for deployMinter)</metadata>
+  <newOwnerAddress>&lt;New owner's TON address&gt; (required for changeOwner)</newOwnerAddress>
+</response>
 
 {{recentMessages}}
 
-Respond with a JSON markdown block containing only the extracted values.`;
+Respond with an XML block containing only the extracted values. Use key-value pairs.`;
 
 export class JettonInteractionAction {
   private walletProvider: WalletProvider;

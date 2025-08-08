@@ -25,16 +25,14 @@ function isStakeContent(content: Content): content is StakeContent {
             typeof content.amount === "number")
     );
 }
-
-const stakeTemplate = `Respond with a JSON markdown block containing only the extracted values. Use null for any values that cannot be determined.
+const stakeTemplate = `Respond with an XML block containing only the extracted values. Use key-value pairs.
+Use <null/> for any values that cannot be determined.
 
 Example response:
-\`\`\`json
-{
-    "poolId": "pool123",
-    "amount": "1.5"
-}
-\`\`\`
+<response>
+    <poolId>pool123</poolId>
+    <amount>1.5</amount>
+</response>
 
 {{recentMessages}}
 
@@ -42,7 +40,7 @@ Given the recent messages, extract the following information for staking TON:
 - Pool identifier (poolId)
 - Amount to stake
 
-Respond with a JSON markdown block containing only the extracted values.`;
+Respond with an XML block containing only the extracted values. Use key-value pairs.`;
 
 /**
  * Modified StakeAction class that uses the nativeStakingProvider which
@@ -90,7 +88,7 @@ const buildStakeDetails = async (
     });
 
     // Generate stake content with the schema
-    const result = await runtime.useModel(ModelClass.SMALL, {
+    const result = await runtime.useModel(ModelClass.TEXT_SMALL, {
         runtime,
         context: stakeContext,
         schema: stakeSchema,

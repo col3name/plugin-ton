@@ -25,21 +25,20 @@ export class TONPriceAction {
   }
 }
 
-const priceTemplate = `Respond with a JSON markdown block containing only the extracted values. Use null for any values that cannot be determined.
+const priceTemplate = `Respond with an XML block containing only the extracted values. Use key-value pairs.
+Use <null/> for any values that cannot be determined.
 
 Example response:
-\`\`\`json
-{
-    "token": "TON"
-}
-\`\`\`
+<response>
+  <token>TON</token>
+</response>
 
 {{recentMessages}}
 
 Given the recent messages, extract the following information about the requested token price:
 - Token symbol or address
 
-Respond with a JSON markdown block containing only the extracted values.`;
+Respond with an XML block containing only the extracted values. Use key-value pairs.`;
 
 export default {
   name: "GET_TOKEN_PRICE_TON",

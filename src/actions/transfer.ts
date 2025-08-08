@@ -32,15 +32,14 @@ function isTransferContent(content: Content): content is TransferContent {
     );
 }
 
-const transferTemplate = `Respond with a JSON markdown block containing only the extracted values. Use null for any values that cannot be determined.
+const transferTemplate = `Respond with an XML block containing only the extracted values. Use key-value pairs.
+Use <null/> for any values that cannot be determined.
 
 Example response:
-\`\`\`json
-{
-    "recipient": "EQCGScrZe1xbyWqWDvdI6mzP-GAcAWFv6ZXuaJOuSqemxku4",
-    "amount": "1"
-}
-\`\`\`
+<response>
+  <recipient>EQCGScrZe1xbyWqWDvdI6mzP-GAcAWFv6ZXuaJOuSqemxku4</recipient>
+  <amount>1</amount>
+</response>
 
 {{recentMessages}}
 
@@ -48,7 +47,7 @@ Given the recent messages, extract the following information about the requested
 - Recipient wallet address
 - Amount to transfer
 
-Respond with a JSON markdown block containing only the extracted values.`;
+Respond with an XML block containing only the extracted values. Use key-value pairs.`;
 
 // Add interface for contract methods
 interface TonWalletContract {
@@ -151,7 +150,7 @@ const buildTransferDetails = async (
     });
 
     // Generate transfer content with the schema
-    const result = await runtime.useModel(ModelClass.SMALL, {
+    const result = await runtime.useModel(ModelClass.TEXT_SMALL, {
         runtime,
         context: transferContext,
         schema: transferSchema,

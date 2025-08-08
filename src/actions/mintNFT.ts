@@ -116,43 +116,38 @@ const mintNFTSchema = z
 
 /**
  * Template string to guide the AI agent.
- */
-const mintNFTTemplate = `Respond with a JSON markdown block containing only the extracted values.
-Use null for any values that cannot be determined.
+ */const mintNFTTemplate = `Respond with an XML block containing only the extracted values. Use key-value pairs.
+Use <null/> for any values that cannot be determined.
 
 Example response for standalone NFT (belongs to a collection):
-\`\`\`json
-{
-    "nftType": "standalone",
-    "collection": "EQCGScrZe1xbyWqWDvdI6mzP-GAcAWFv6ZXuaJOuSqemxku4",
-    "owner": "EQCGScrZe1xbyWqWDvdI6mzP-GAcAWFv6ZXuaJOuSqemxku4",
-    "storage": "prompt",
-    "metadata": {
-        "name": "Rare NFT Artwork",
-        "description": "A unique NFT artwork minted on TON",
-        "image": "https://example.com/nft-image.png",
-        "cover_image": "https://example.com/nft-cover-image.png",
-        "social_links": {
-            "twitter": "https://x.com/example",
-            "telegram": "https://t.me/example",
-            "website": "https://example.com"
-        }
-    }
-}
-\`\`\`
+<response>
+    <nftType>standalone</nftType>
+    <collection>EQCGScrZe1xbyWqWDvdI6mzP-GAcAWFv6ZXuaJOuSqemxku4</collection>
+    <owner>EQCGScrZe1xbyWqWDvdI6mzP-GAcAWFv6ZXuaJOuSqemxku4</owner>
+    <storage>prompt</storage>
+    <metadata>
+        <name>Rare NFT Artwork</name>
+        <description>A unique NFT artwork minted on TON</description>
+        <image>https://example.com/nft-image.png</image>
+        <cover_image>https://example.com/nft-cover-image.png</cover_image>
+        <social_links>
+            <twitter>https://x.com/example</twitter>
+            <telegram>https://t.me/example</telegram>
+            <website>https://example.com</website>
+        </social_links>
+    </metadata>
+</response>
 
 Example response for collection NFT (new collection):
-\`\`\`json
-{
-    "nftType": "collection",
-    "owner": "EQCGScrZe1xbyWqWDvdI6mzP-GAcAWFv6ZXuaJOuSqemxku4",
-    "storage": "file",
-    "imagesFolderPath": "path/to/images",
-    "metadataFolderPath": "path/to/metadata",
-    "royaltyPercent": 0.05,
-    "royaltyAddress": "EQCGScrZe1xbyWqWDvdI6mzP-GAcAWFv6ZXuaJOuSqemxku4"
-}
-\`\`\`
+<response>
+    <nftType>collection</nftType>
+    <owner>EQCGScrZe1xbyWqWDvdI6mzP-GAcAWFv6ZXuaJOuSqemxku4</owner>
+    <storage>file</storage>
+    <imagesFolderPath>path/to/images</imagesFolderPath>
+    <metadataFolderPath>path/to/metadata</metadataFolderPath>
+    <royaltyPercent>0.05</royaltyPercent>
+    <royaltyAddress>EQCGScrZe1xbyWqWDvdI6mzP-GAcAWFv6ZXuaJOuSqemxku4</royaltyAddress>
+</response>
 
 {{recentMessages}}
 
@@ -165,7 +160,7 @@ Given the recent messages, extract the required information to mint an NFT:
 - Images folder path: For "file" storage, the path to the images folder.
 - Metadata folder path: For "file" storage, the path to the metadata folder.
 
-Respond with a JSON markdown block containing only the extracted values.`;
+Respond with an XML block containing only the extracted values. Use key-value pairs.`;
 
 /**
  * Builds the mint details by composing the context using the mintNFTTemplate,
@@ -190,7 +185,7 @@ const buildMintDetails = async (
   });
 
   try {
-    const result = await runtime.useModel(ModelClass.SMALL, {
+    const result = await runtime.useModel(ModelClass.TEXT_SMALL, {
       runtime,
       context: mintContext,
       schema: mintNFTSchema,

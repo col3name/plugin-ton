@@ -53,71 +53,61 @@ const dexActionSchema = z.object({
 });
 
 type DexActionContent = z.infer<typeof dexActionSchema>;
-
-const dexTemplate = `Return a JSON object for the DEX operation. The response should contain no schema information or additional properties.
+const dexTemplate = `Respond with an XML block containing only the extracted values. Use key-value pairs.
+Use <null/> for any values that cannot be determined.
 
 Example responses:
 
 For creating a pool:
-\`\`\`json
-{
-    "operation": "CREATE_POOL",
-    "dex": "DEDUST",
-    "tokenA": "EQCGScrZe1xbyWqWDvdI6mzP-GAcAWFv6ZXuaJOuSqemxku4",
-    "amountA": 100,
-    "tokenB": "EQBCGScrZe1xbyWqWDvdI6mzP-GAcAWFv6ZXuaJOuSqemxku4",
-    "amountB": 100,
-    "isTon": false
-}
-\`\`\`
+<response>
+  <operation>CREATE_POOL</operation>
+  <dex>DEDUST</dex>
+  <tokenA>EQCGScrZe1xbyWqWDvdI6mzP-GAcAWFv6ZXuaJOuSqemxku4</tokenA>
+  <amountA>100</amountA>
+  <tokenB>EQBCGScrZe1xbyWqWDvdI6mzP-GAcAWFv6ZXuaJOuSqemxku4</tokenB>
+  <amountB>100</amountB>
+  <isTon>false</isTon>
+</response>
 
 For TON-token pool creation:
-\`\`\`json
-{
-    "operation": "CREATE_POOL",
-    "dex": "DEDUST",
-    "tokenA": "EQCGScrZe1xbyWqWDvdI6mzP-GAcAWFv6ZXuaJOuSqemxku4",
-    "amountA": 100,
-    "isTon": true,
-    "tonAmount": 50
-}
-\`\`\`
+<response>
+  <operation>CREATE_POOL</operation>
+  <dex>DEDUST</dex>
+  <tokenA>EQCGScrZe1xbyWqWDvdI6mzP-GAcAWFv6ZXuaJOuSqemxku4</tokenA>
+  <amountA>100</amountA>
+  <isTon>true</isTon>
+  <tonAmount>50</tonAmount>
+</response>
 
 For depositing liquidity:
-\`\`\`json
-{
-    "operation": "DEPOSIT",
-    "dex": "DEDUST",
-    "tokenA": "EQCGScrZe1xbyWqWDvdI6mzP-GAcAWFv6ZXuaJOuSqemxku4",
-    "amountA": 100,
-    "isTon": true,
-    "tonAmount": 50,
-    "liquidity": 75
-}
-\`\`\`
+<response>
+  <operation>DEPOSIT</operation>
+  <dex>DEDUST</dex>
+  <tokenA>EQCGScrZe1xbyWqWDvdI6mzP-GAcAWFv6ZXuaJOuSqemxku4</tokenA>
+  <amountA>100</amountA>
+  <isTon>true</isTon>
+  <tonAmount>50</tonAmount>
+  <liquidity>75</liquidity>
+</response>
 
 For withdrawing liquidity:
-\`\`\`json
-{
-    "operation": "WITHDRAW",
-    "dex": "DEDUST",
-    "tokenA": "EQCGScrZe1xbyWqWDvdI6mzP-GAcAWFv6ZXuaJOuSqemxku4",
-    "amountA": 100,
-    "isTon": true,
-    "tonAmount": 50,
-    "liquidity": 75
-}
-\`\`\`
+<response>
+  <operation>WITHDRAW</operation>
+  <dex>DEDUST</dex>
+  <tokenA>EQCGScrZe1xbyWqWDvdI6mzP-GAcAWFv6ZXuaJOuSqemxku4</tokenA>
+  <amountA>100</amountA>
+  <isTon>true</isTon>
+  <tonAmount>50</tonAmount>
+  <liquidity>75</liquidity>
+</response>
 
 For claiming fees:
-\`\`\`json
-{
-    "operation": "CLAIM_FEE",
-    "dex": "DEDUST",
-    "pool": "EQCGScrZe1xbyWqWDvdI6mzP-GAcAWFv6ZXuaJOuSqemxku4",
-    "liquidity": 10
-}
-\`\`\`
+<response>
+  <operation>CLAIM_FEE</operation>
+  <dex>DEDUST</dex>
+  <pool>EQCGScrZe1xbyWqWDvdI6mzP-GAcAWFv6ZXuaJOuSqemxku4</pool>
+  <liquidity>10</liquidity>
+</response>
 
 Rules:
 - Operation must be one of: CREATE_POOL, DEPOSIT, WITHDRAW, CLAIM_FEE
@@ -137,7 +127,19 @@ Rules:
 
 {{recentMessages}}
 
-IMPORTANT: Return ONLY the operation object with no schema information or wrapper object.`;
+Given the recent messages, extract the information for the DEX operation, including:
+- operation
+- dex
+- tokenA
+- amountA
+- tokenB (if applicable)
+- amountB (if applicable)
+- isTon
+- tonAmount (if applicable)
+- liquidity (if applicable)
+- pool (for CLAIM_FEE)
+
+Respond with an XML block containing only the extracted values. Use key-value pairs.`;
 
 export class DexAction {
   private walletProvider: WalletProvider;
@@ -373,7 +375,7 @@ const buildDexActionDetails = async (
     template: dexTemplate,
   });
 
-  const result = await runtime.useModel(ModelClass.SMALL, {
+  const result = await runtime.useModel(ModelClass.TEXT_SMALL, {
     runtime,
     context: actionContext,
     schema: dexActionSchema,

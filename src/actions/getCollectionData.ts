@@ -34,21 +34,19 @@ const getCollectionDataSchema = z.object({
 /**
  * Template guiding the extraction of collection data parameters.
  */
-const getCollectionDataTemplate = `Respond with a JSON markdown block containing only the extracted values. Use null for any values that cannot be determined.
+const getCollectionDataTemplate = `Respond with an XML block containing only the extracted values. Use key-value pairs. Use <null/> for any values that cannot be determined.
 
 Example response:
-\`\`\`json
-{
-  "collectionAddress": "EQCGScrZe1xbyWqWDvdI6mzP-GAcAWFv6ZXuaJOuSqemxku4"
-}
-\`\`\`
+<response>
+  <collectionAddress>EQCGScrZe1xbyWqWDvdI6mzP-GAcAWFv6ZXuaJOuSqemxku4</collectionAddress>
+</response>
 
 {{recentMessages}}
 
 Given the recent messages, extract the following information about the requested NFT collection data:
 - Collection address
 
-Respond with a JSON markdown block containing only the extracted values.`;
+Respond with an XML block containing only the extracted values. Use key-value pairs.`;
 
 /**
  * Custom serializer for BigInt values
@@ -187,7 +185,7 @@ const buildGetCollectionData = async (
     template: getCollectionDataTemplate,
   });
 
-  const result = await runtime.useModel(ModelClass.SMALL, {
+  const result = await runtime.useModel(ModelClass.TEXT_SMALL, {
     runtime,
     context: getCollectionContext,
     schema: getCollectionDataSchema,

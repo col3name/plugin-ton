@@ -9,57 +9,57 @@ import {
     type HandlerCallback,
     Content,
   } from "@elizaos/core";
-  import { z } from "zod";
-  import { initWalletProvider, WalletProvider } from "../providers/wallet";
-  import { getMinBid, getNextValidBidAmount, isAuctionEnded } from "../services/nft-marketplace/listingData";
-  import { bidOnAuction } from "../services/nft-marketplace/listingTransactions";
+import { z } from "zod";
+import { initWalletProvider, WalletProvider } from "../providers/wallet";
+import { getMinBid, getNextValidBidAmount, isAuctionEnded } from "../services/nft-marketplace/listingData";
+import { bidOnAuction } from "../services/nft-marketplace/listingTransactions";
 import { toNano } from "@ton/ton";
 
-  /**
-   * Schema for bid input.
-   * Requires:
-   * - nftAddress: The NFT contract address.
-   * - Optional: bidAmount: The amount to bid (in nanoTON).
-   */
-  const bidAuctionSchema = z
-    .object({
-      nftAddress: z.string().nonempty("NFT address is required"),
-      bidAmount: z.string().optional(),
-    })
-    .refine(
-      (data) => data.nftAddress,
-      {
-        message: "NFT address is required",
-        path: ["nftAddress"],
-      }
-    );
+/**
+ * Schema for bid input.
+ * Requires:
+ * - nftAddress: The NFT contract address.
+ * - Optional: bidAmount: The amount to bid (in nanoTON).
+ */
+const bidAuctionSchema = z
+  .object({
+    nftAddress: z.string().nonempty("NFT address is required"),
+    bidAmount: z.string().optional(),
+  })
+  .refine(
+    (data) => data.nftAddress,
+    {
+      message: "NFT address is required",
+      path: ["nftAddress"],
+    }
+  );
 
-  export interface BidAuctionContent extends Content {
-    nftAddress: string;
-    bidAmount?: string;
-  }
+export interface BidAuctionContent extends Content {
+  nftAddress: string;
+  bidAmount?: string;
+}
 
-  function isBidAuctionContent(
-    content: Content
-  ): content is BidAuctionContent {
-    return typeof content.nftAddress === "string";
-  }
+function isBidAuctionContent(
+  content: Content
+): content is BidAuctionContent {
+  return typeof content.nftAddress === "string";
+}
 
-  const bidAuctionTemplate = `Respond with a JSON markdown block containing only the extracted values.
-  Example response:
-  \`\`\`json
-  {
-    "nftAddress": "<NFT address to bid on>",
-    "bidAmount": "<optional bid amount in TON>"
-  }
-  \`\`\`
+const bidAuctionTemplate = `Respond with an XML block containing only the extracted values. Use key-value pairs. Use <null/> for any values that cannot be determined.
 
-  {{recentMessages}}
+Example response:
+<response>
+    <nftAddress>&lt;NFT address to bid on&gt;</nftAddress>
+    <bidAmount>&lt;optional bid amount in TON&gt;</bidAmount>
+</response>
 
-  If no bid amount is provided, make bidAmount null or omit it.
-  Respond with a JSON markdown block containing only the extracted values.`;
+{{recentMessages}}
 
-  /**
+If no bid amount is provided, make <bidAmount> a <null/> element or omit it.
+Respond with an XML block containing only the extracted values. Use key-value pairs.`;
+
+
+/**
    * Helper function to build bid parameters.
    */
   const buildBidAuctionData = async (
@@ -71,7 +71,7 @@ import { toNano } from "@ton/ton";
       state,
       template: bidAuctionTemplate,
     });
-    const result = await runtime.useModel(ModelClass.SMALL, {
+    const result = await runtime.useModel(ModelClass.TEXT_SMALL, {
       runtime,
       context,
       schema: bidAuctionSchema as any,
