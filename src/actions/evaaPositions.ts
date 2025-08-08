@@ -1,14 +1,14 @@
 import {
-    elizaLogger,
-    Action,
-    HandlerCallback,
-    IAgentRuntime,
-    Memory,
-    State,
-    composePromptFromState,
-    parseKeyValueXml,
-    ModelType as ModelClass,
-    // generateObjectArray
+  elizaLogger,
+  Action,
+  HandlerCallback,
+  IAgentRuntime,
+  Memory,
+  State,
+  composePromptFromState,
+  parseKeyValueXml,
+  ModelType as ModelClass, ActionExample,
+  // generateObjectArray
 } from '@elizaos/core';
 import { Dictionary, fromNano } from '@ton/ton';
 import BigNumber from "bignumber.js";
@@ -598,7 +598,7 @@ const positionsAction: Action = {
                 }
             }
         ]
-    ]
+    ] as ActionExample[][],
 };
 
 export default positionsAction;

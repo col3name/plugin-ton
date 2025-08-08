@@ -7,7 +7,7 @@ import {
   type Memory,
   type State,
   type HandlerCallback,
-  Content,
+  Content, ActionExample,
 } from "@elizaos/core";
 import { Address, JettonMaster} from "@ton/ton";
 import { z } from "zod";
@@ -793,5 +793,5 @@ export default {
         },
       },
     ],
-  ],
+  ] as ActionExample[][],
 };

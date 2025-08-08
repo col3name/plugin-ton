@@ -7,7 +7,7 @@ import {
   Content,
   composePromptFromState,
   parseKeyValueXml,
-  ModelType as ModelClass,
+  ModelType as ModelClass, ActionExample,
 } from "@elizaos/core";
 import { WalletProvider } from "../providers/wallet";
 import { z } from "zod";
@@ -161,36 +161,36 @@ ${mnemonic.join(" ")}`,
   },
   validate: async (_runtime: IAgentRuntime) => true,
   examples: [
-      [
-          {
-              user: "{{user1}}",
-              content: {
-                  text: "Please create a new TON wallet for me.",
-                  action: "CREATE_TON_WALLET",
-              },
-          },
-          {
-              user: "{{user1}}",
-              content: {
-                  text: "New TON wallet created!/n Your password was used to encrypt the wallet keypair, but never stored./nWallet Address: EQAXxxxxxxxxxxxxxxxxxxxxxx./n I've used both your password and the mnemonic to create the wallet./nPlease securely store your mnemonic",
-              },
-          },
+    [
+      {
+        user: "{{user1}}",
+        content: {
+          text: "Please create a new TON wallet for me.",
+          action: "CREATE_TON_WALLET",
+        },
+      },
+      {
+        user: "{{user1}}",
+        content: {
+          text: "New TON wallet created!/n Your password was used to encrypt the wallet keypair, but never stored./nWallet Address: EQAXxxxxxxxxxxxxxxxxxxxxxx./n I've used both your password and the mnemonic to create the wallet./nPlease securely store your mnemonic",
+        },
+      },
 
-      ],
-      [
-          {
-              user: "{{user1}}",
-              content: {
-                  text: "Please make me a new TON wallet.",
-                  action: "CREATE_TON_WALLET",
-              },
-          },
-          {
-              user: "{{user1}}",
-              content: {
-                  text: "New TON wallet created!/n Your password was used to encrypt the wallet keypair, but never stored./nWallet Address: EQAXxxxxxxxxxxxxxxxxxxxxxx./n I've used both your password and the mnemonic to create the wallet./nPlease securely store your mnemonic",
-              },
-          },
-      ]
-  ],
+    ],
+    [
+      {
+        user: "{{user1}}",
+        content: {
+          text: "Please make me a new TON wallet.",
+          action: "CREATE_TON_WALLET",
+        },
+      },
+      {
+        user: "{{user1}}",
+        content: {
+          text: "New TON wallet created!/n Your password was used to encrypt the wallet keypair, but never stored./nWallet Address: EQAXxxxxxxxxxxxxxxxxxxxxxx./n I've used both your password and the mnemonic to create the wallet./nPlease securely store your mnemonic",
+        },
+      },
+    ]
+  ] as ActionExample[][],
 };

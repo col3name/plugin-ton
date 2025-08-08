@@ -7,7 +7,7 @@ import {
   type Memory,
   type State,
   type HandlerCallback,
-  Content,
+  Content, ActionExample,
 } from "@elizaos/core";
 import { Address, internal, SendMode, toNano } from "@ton/ton";
 import { z } from "zod";
@@ -221,5 +221,5 @@ export default {
         },
       },
     ],
-  ],
+  ] as ActionExample[][],
 };

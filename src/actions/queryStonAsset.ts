@@ -93,7 +93,6 @@ const buildQueryAssetDetails = async (
 };
 
 
-
 export default {
     name: "QUERY_STON_ASSET",
     similes: ["QUERY_STON_ASSET", "QUERY_STON_ASSETS", "QUERY_STON_ASSET_INFO", "QUERY_STON_ASSET_INFORMATION"],
@@ -105,20 +104,20 @@ export default {
     },
     description: "Query information about a token in the TON blockchain through STON.fi DEX",
     handler: async (
-        runtime: IAgentRuntime,
-        message: Memory,
-        state: State,
-        _options: { [key: string]: unknown },
-        callback?: HandlerCallback,
+      runtime: IAgentRuntime,
+      message: Memory,
+      state: State,
+      _options: { [key: string]: unknown },
+      callback?: HandlerCallback,
     ) => {
         elizaLogger.log("Starting QUERY_STON_ASSET handler...");
 
         elizaLogger.log("Handler initialized. Checking user authorization...");
 
         const queryAssetContent = await buildQueryAssetDetails(
-            runtime,
-            message,
-            state,
+          runtime,
+          message,
+          state,
         );
 
         try {
@@ -143,7 +142,7 @@ export default {
             - display name ${token.displayName}
             - contract address ${token.contractAddress}
             - liquidity of the token ${token.tags.filter(tag => tag.startsWith('asset:liquidity:') || tag.includes('_liquidity'))
-                    .map(tag => tag.replace('asset:liquidity:', '').replace('_liquidity', '').replace('_', ' '))[0]}
+              .map(tag => tag.replace('asset:liquidity:', '').replace('_liquidity', '').replace('_', ' '))[0]}
             - is popular? ${token.tags.includes('asset:popular')}
             `;
             const responseContext = composePromptFromState({
@@ -168,7 +167,7 @@ export default {
                     displayName: token.displayName,
                     contractAddress: token.contractAddress,
                     liquidity: token.tags.filter(tag => tag.startsWith('asset:liquidity:') || tag.includes('_liquidity'))
-                        .map(tag => tag.replace('asset:liquidity:', '').replace('_liquidity', '').replace('_', ' '))[0],
+                      .map(tag => tag.replace('asset:liquidity:', '').replace('_liquidity', '').replace('_', ' '))[0],
                 },
             });
             return true;
@@ -288,5 +287,5 @@ export default {
                 },
             },
         ],
-    ] as ActionExample[][],
+    ],
 } as Action;

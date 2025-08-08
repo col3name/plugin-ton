@@ -7,7 +7,7 @@ import {
     ModelType as ModelClass,
     type IAgentRuntime,
     type Memory,
-    type State,
+    type State, ActionExample,
 } from "@elizaos/core";
 import { z } from "zod";
 import {
@@ -264,5 +264,5 @@ export default {
                 },
             },
         ],
-    ],
+    ] as ActionExample[][],
 };

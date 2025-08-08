@@ -1,12 +1,12 @@
 import {
-    Action,
-    elizaLogger,
-    GoalStatus,
-    HandlerCallback,
-    IAgentRuntime,
-    Memory,
-    State,
-  } from "@elizaos/core";
+  Action, ActionExample,
+  elizaLogger,
+  GoalStatus,
+  HandlerCallback,
+  IAgentRuntime,
+  Memory,
+  State,
+} from "@elizaos/core";
 
   import {
     initTonConnectProvider,
@@ -483,5 +483,5 @@ import {
           },
         },
       ],
-    ],
+    ] as ActionExample[][],
   };

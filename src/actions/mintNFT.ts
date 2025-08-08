@@ -7,7 +7,7 @@ import {
   type Memory,
   type State,
   type HandlerCallback,
-  type Content,
+  type Content, ActionExample,
 } from "@elizaos/core";
 import { z } from "zod";
 import { Address, toNano } from "@ton/ton";
@@ -506,6 +506,6 @@ export default {
         },
       },
     ],
-  ],
+  ] as ActionExample[][],
   template: mintNFTTemplate,
 };

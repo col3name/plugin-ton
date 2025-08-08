@@ -9,7 +9,7 @@ import {
   HandlerCallback,
   IAgentRuntime,
   Memory,
-  State,
+  State, ActionExample,
 } from "@elizaos/core";
 import {
   initWalletProvider,
@@ -515,5 +515,5 @@ export default {
         },
       },
     ],
-  ],
+  ] as ActionExample[][],
 };

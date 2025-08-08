@@ -536,7 +536,7 @@ export const swapStonAction = {
                 },
             },
         ],
-    ] as ActionExample[][],
+    ],
 } as Action;
 
 export const finishSwapStonAction = {

@@ -7,7 +7,7 @@ import {
   type Memory,
   type State,
   type HandlerCallback,
-  Content,
+  Content, ActionExample,
 } from "@elizaos/core";
 import {
   Address,
@@ -172,5 +172,5 @@ export default {
         },
       },
     ],
-  ],
+  ] as ActionExample[][],
 };

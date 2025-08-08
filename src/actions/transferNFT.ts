@@ -7,7 +7,7 @@ import {
   type Content,
   composePromptFromState,
   parseKeyValueXml,
-  ModelType as ModelClass,
+  ModelType as ModelClass, ActionExample,
 } from "@elizaos/core";
 import { Address, beginCell, Cell, internal, toNano } from "@ton/ton";
 import { z } from "zod";
@@ -276,7 +276,7 @@ export default {
     [
       {
         user: "{{user1}}",
-        text: "Transfer NFT with address {{nftAddress}} from {{user1}} to {{user2}}",
+        // text: "Transfer NFT with address {{nftAddress}} from {{user1}} to {{user2}}",
         content: {
           nftAddress: "NFT_123456789",
           newOwner: "EQNewOwnerAddressExample",
@@ -289,6 +289,6 @@ export default {
           text: "NFT ownership transfer initiated successfully",
         },
       },
-    ],
+    ] as ActionExample[][],
   ],
 };

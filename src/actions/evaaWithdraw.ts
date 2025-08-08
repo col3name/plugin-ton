@@ -7,7 +7,7 @@ import {
     elizaLogger,
     composePromptFromState,
     parseKeyValueXml,
-    ModelType as ModelClass,
+    ModelType as ModelClass, ActionExample,
 } from "@elizaos/core";
 import { sleep, convertToBigInt } from "../utils/util";
 import BigNumber from "bignumber.js";
@@ -498,7 +498,7 @@ const withdrawAction: Action = {
                 },
             },
         ],
-    ],
+    ] as ActionExample[][],
 };
 
 export default withdrawAction;

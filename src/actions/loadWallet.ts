@@ -1,13 +1,13 @@
 import {
-    elizaLogger,
-    type IAgentRuntime,
-    type Memory,
-    type State,
-    type HandlerCallback,
-    Content,
-    composePromptFromState,
-    parseKeyValueXml,
-    ModelType as ModelClass,
+  elizaLogger,
+  type IAgentRuntime,
+  type Memory,
+  type State,
+  type HandlerCallback,
+  Content,
+  composePromptFromState,
+  parseKeyValueXml,
+  ModelType as ModelClass, ActionExample,
 } from "@elizaos/core";
 import { WalletProvider } from "../providers/wallet";
 import { z } from "zod";
@@ -164,20 +164,20 @@ Please store it securely.`,
   },
   validate: async (_runtime: IAgentRuntime) => true,
   examples: [
-      [
-          {
-              user: "{{user1}}",
-              content: {
-                  text: "Please recover my TON wallet. My decryption password is my_password and my wallet address is EQAXxxxxxxxxxxxxxxxxxxxxxx.",
-                  action: "RECOVER_TON_WALLET",
-              },
-          },
-          {
-              user: "{{user1}}",
-              content: {
-                  text: "Wallet recovered successfully. Your Decrypted wallet is: ${JSON.stringify(walletProvider.keypair)}. Please store it securely.",
-              },
-          },
-      ],
-  ],
+    [
+      {
+        user: "{{user1}}",
+        content: {
+          text: "Please recover my TON wallet. My decryption password is my_password and my wallet address is EQAXxxxxxxxxxxxxxxxxxxxxxx.",
+          action: "RECOVER_TON_WALLET",
+        },
+      },
+      {
+        user: "{{user1}}",
+        content: {
+          text: "Wallet recovered successfully. Your Decrypted wallet is: ${JSON.stringify(walletProvider.keypair)}. Please store it securely.",
+        },
+      },
+    ],
+  ] as ActionExample[][],
 };

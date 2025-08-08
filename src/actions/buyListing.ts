@@ -1,14 +1,14 @@
 import {
-    elizaLogger,
-    composePromptFromState,
-    parseKeyValueXml,
-    ModelType as ModelClass,
-    type IAgentRuntime,
-    type Memory,
-    type State,
-    type HandlerCallback,
-    Content,
-  } from "@elizaos/core";
+  elizaLogger,
+  composePromptFromState,
+  parseKeyValueXml,
+  ModelType as ModelClass,
+  type IAgentRuntime,
+  type Memory,
+  type State,
+  type HandlerCallback,
+  Content, ActionExample,
+} from "@elizaos/core";
   import { Address, internal, SendMode, toNano } from "@ton/ton";
   import { z } from "zod";
   import { initWalletProvider, WalletProvider } from "../providers/wallet";
@@ -169,5 +169,5 @@ export default {
         },
       },
     ]
-  ],
+  ] as ActionExample[][],
 };

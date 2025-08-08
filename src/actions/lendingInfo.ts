@@ -7,7 +7,7 @@ import {
     ModelType as ModelClass,
     type IAgentRuntime,
     type Memory,
-    type State,
+    type State, ActionExample,
 } from "@elizaos/core";
 import { z } from "zod";
 import { sleep, base64ToHex, formatCurrency } from "../utils/util";
@@ -370,5 +370,5 @@ Health factor (account could be liquidated if < 0): 0.133`,
                 },
             },
         ],
-    ],
+    ] as ActionExample[][],
 };
