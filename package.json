@@ -19,7 +19,7 @@
     "dist"
   ],
   "dependencies": {
-    "@elizaos/core": "workspace:*",
+    "@elizaos/core": "0.25.9",
     "@evaafi/sdk": "latest",
     "@ton/crypto": "3.3.0",
     "@ton/ton": "15.1.0",
