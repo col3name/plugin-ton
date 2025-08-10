@@ -449,14 +449,14 @@ const repayAction: Action = {
     },
     examples: [
         [
-            {
-                user: "{{user1}}",
+        {
+            user: "{{user1}}",
                 content: {
                     text: "I want to repay my entire TON loan to the EVAA protocol",
                 },
             },
             {
-                user: "{{agentName}}",
+                name: "{{agentName}}",
                 content: {
                     text: "I'll help you repay your entire TON loan to the EVAA protocol. Processing your request...",
                     action: "REPAY",
@@ -464,21 +464,21 @@ const repayAction: Action = {
             },
         ],
         [
-            {
-                user: "{{user1}}",
+        {
+            user: "{{user1}}",
                 content: {
                     text: "Can you help me fully repay my EVAA TON loan with user code included?",
                 },
             },
             {
-                user: "{{agentName}}",
+                name: "{{agentName}}",
                 content: {
                     text: "I'll help you fully repay your EVAA TON loan with user code included. Processing your request...",
                     action: "REPAY",
                 },
             },
         ],
-    ] as ActionExample[][],
+    ],
 };
 
 export default repayAction;

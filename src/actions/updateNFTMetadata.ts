@@ -7,7 +7,7 @@ import {
   type Memory,
   type State,
   type HandlerCallback,
-  Content, ActionExample,
+  Content, ActionExample, Action, ActionResult,
 } from "@elizaos/core";
 import { Address, beginCell, internal, toNano } from "@ton/ton";
 import { z } from "zod";
@@ -251,6 +251,9 @@ class UpdateNFTMetadataAction {
     const state = await walletClient.getContractState(
         this.walletProvider.wallet.address,
     );
+    if (!state.lastTransaction) {
+      return '';
+    }
     const { lt: _, hash: lastHash } = state.lastTransaction;
     return base64ToHex(lastHash);
   }
@@ -282,7 +285,7 @@ export default {
     state: State,
     _options: Record<string, unknown>,
     callback?: HandlerCallback
-  ) => {
+  ): Promise<ActionResult | void | undefined>  => {
     elizaLogger.log("Starting UPDATE_NFT_METADATA handler...");
 
     const updateDetails = await buildUpdateDetails(runtime, message, state);
@@ -295,7 +298,10 @@ export default {
           content: { error: "Invalid update content" },
         });
       }
-      return false;
+      return {
+        success: false,
+        error: "Invalid update content",
+      };
     }
 
     try {
@@ -327,7 +333,9 @@ export default {
           content: result,
         });
       }
-      return true;
+      return {
+        success: true,
+      };
     } catch (error: any) {
       elizaLogger.error("Error updating NFT metadata:", error);
       if (callback) {
@@ -336,7 +344,9 @@ export default {
           content: { error: error.message },
         });
       }
-      return false;
+      return {
+        success: false,
+      };
     }
   },
   validate: async (_runtime: IAgentRuntime) => true,
@@ -361,11 +371,12 @@ export default {
         },
       },
       {
-        user: "{{user1}}",
+        name: "{{user1}}",
         content: {
           text: "NFT metadata updated successfully",
         },
       },
     ],
   ] as ActionExample[][],
-};
+} as Action;
+

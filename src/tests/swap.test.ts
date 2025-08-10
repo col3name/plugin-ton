@@ -6,6 +6,7 @@ import { type KeyPair, mnemonicToWalletKey } from "@ton/crypto";
 import { WalletProvider } from "../providers/wallet";
 import { SwapAction } from "../actions/swapSton";
 import { AssetTag } from '@ston-fi/api';
+import { initTonConnectProvider, TonConnectProvider } from "../providers/tonConnect.ts";
 
 const TON_RPC_URL = "https://testnet.toncenter.com/api/v2/jsonRPC";
 const SWAP = ["TON", "TestRED", "0.001"] // Sucessfull Swap
@@ -25,6 +26,7 @@ describe("Swap Asset Action", () => {
     let walletProvider: WalletProvider;
     let keypair: KeyPair;
     let mockedRuntime: IAgentRuntime;
+    let tonConnectProvider: TonConnectProvider;
 
     beforeAll(async () => {
         mockedRuntime = {
@@ -35,6 +37,7 @@ describe("Swap Asset Action", () => {
         } as unknown as IAgentRuntime;
         keypair = await mnemonicToWalletKey(TON_PRIVATE_KEY.split(" "));
         walletProvider = new WalletProvider(keypair, TON_RPC_URL, mockCacheManager);
+        tonConnectProvider = await initTonConnectProvider(mockedRuntime);
         stonProvider = await initStonProvider(mockedRuntime);
     });
 
@@ -44,7 +47,7 @@ describe("Swap Asset Action", () => {
             SWAP[1],
             `(${AssetTag.LiquidityVeryHigh} | ${AssetTag.LiquidityHigh} | ${AssetTag.LiquidityMedium} ) & ${AssetTag.Popular} & ${AssetTag.DefaultSymbol}`
         ) as [StonAsset, StonAsset];
-        const action = new SwapAction(walletProvider, stonProvider);
+        const action = new SwapAction(walletProvider, stonProvider, tonConnectProvider);
         await action.swap(inTokenAsset, outTokenAsset, SWAP[2]);
     });
 
@@ -54,7 +57,7 @@ describe("Swap Asset Action", () => {
             SWAP[1],
             `(${AssetTag.LiquidityVeryHigh} | ${AssetTag.LiquidityHigh} | ${AssetTag.LiquidityMedium} ) & ${AssetTag.Popular} & ${AssetTag.DefaultSymbol}`
         ) as [StonAsset, StonAsset];
-        const action = new SwapAction(walletProvider, stonProvider);
+        const action = new SwapAction(walletProvider, stonProvider, tonConnectProvider);
         await expect(action.swap(inTokenAsset, outTokenAsset, SWAP_2[2])).rejects.toThrow("No funds");
     });
 });

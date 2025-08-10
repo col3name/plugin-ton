@@ -7,7 +7,7 @@ import {
     ModelType as ModelClass,
     type IAgentRuntime,
     type Memory,
-    type State, ActionExample,
+    type State, ActionExample, Action,
 } from "@elizaos/core";
 import { z } from "zod";
 import {
@@ -15,7 +15,7 @@ import {
     type WalletProvider,
     nativeWalletProvider,
 } from "../providers/wallet";
-import { internal } from "@ton/ton";
+import {ContractState, internal} from "@ton/ton";
 import { base64ToHex, sleep } from "../utils/util";
 
 export interface TransferContent extends Content {
@@ -58,7 +58,27 @@ interface ActionOptions {
     [key: string]: unknown;
 }
 
-export class TransferAction {
+interface ContractStateLocal {
+    balance: bigint;
+    state: "active" | "uninitialized" | "frozen";
+    code: Buffer | null;
+    data: Buffer | null;
+    lastTransaction: {
+        lt: string;
+        hash: string;
+    }
+|
+    null;
+    blockId: {
+        workchain: number;
+        shard: string;
+        seqno: number;
+    }
+    ;
+    timestampt: number;
+}
+
+export class TransferAction  {
     private walletProvider: WalletProvider;
 
     constructor(walletProvider: WalletProvider) {
@@ -95,13 +115,17 @@ export class TransferAction {
             console.log("Transaction sent, still waiting for confirmation...");
             await sleep(1500);
             //this.waitForTransaction(seqno, contract);
-            const state = await walletClient.getContractState(
+            const state: ContractStateLocal = await walletClient.getContractState(
                 this.walletProvider.wallet.address,
             );
+            if (state.lastTransaction === null) {
+                throw new Error("Transfer failed: lastTransaction is null");
+            }
             const { lt: _, hash: lastHash } = state.lastTransaction;
             return base64ToHex(lastHash);
         } catch (error) {
-            throw new Error(`Transfer failed: ${error.message}`);
+            // @ts-ignore
+            throw new Error(`Transfer failed: ${error?.message}`);
         }
     }
 
@@ -195,7 +219,9 @@ export default {
                     content: { error: "Invalid transfer content" },
                 });
             }
-            return false;
+            return {
+                success: false,
+            };
         }
 
         try {
@@ -217,90 +243,97 @@ export default {
                 });
             }
 
-            return true;
+            return {
+                success: true,
+            };
         } catch (error) {
             console.error("Error during token transfer:", error);
             if (callback) {
+                // @ts-ignore
+                const message1 = error.message;
                 callback({
-                    text: `Error transferring tokens: ${error.message}`,
-                    content: { error: error.message },
+                    text: `Error transferring tokens: ${message1}`,
+                    content: { error: message1 },
                 });
             }
-            return false;
+
+            return {
+                success: false,
+            };
         }
     },
     template: transferTemplate,
     // eslint-disable-next-line
     validate: async (_runtime: IAgentRuntime) => {
-        //console.log("Validating TON transfer from user:", message.userId);
+        //console.log("Validating TON transfer from name:", message.userId);
         return true;
     },
     examples: [
         [
-            {
-                user: "{{user1}}",
+        {
+            user: "{{user1}}",
                 content: {
                     text: "Send 1 TON tokens to EQCGScrZe1xbyWqWDvdI6mzP-GAcAWFv6ZXuaJOuSqemxku4",
                     action: "SEND_TON_TOKEN",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{user2}}",
                 content: {
                     text: "I'll send 1 TON tokens now...",
                     action: "SEND_TON_TOKEN",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{user2}}",
                 content: {
                     text: "Successfully sent 1 TON tokens to EQCGScrZe1xbyWqWDvdI6mzP-GAcAWFv6ZXuaJOuSqemxku4, Transaction: c8ee4a2c1bd070005e6cd31b32270aa461c69b927c3f4c28b293c80786f78b43",
                 },
             },
         ],
         [
-            {
-                user: "{{user1}}",
+        {
+            user: "{{user1}}",
                 content: {
                     text: "Transfer 0.5 TON to EQCD39VS5jcptHL8vMjEXrzGaRcCVYto7HUn4bpAOg8xqB2N",
                     action: "SEND_TON_TOKEN",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{user2}}",
                 content: {
                     text: "Processing transfer of 0.5 TON...",
                     action: "SEND_TON_TOKEN",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{user2}}",
                 content: {
                     text: "Successfully sent 0.5 TON to EQCD39VS5jcptHL8vMjEXrzGaRcCVYto7HUn4bpAOg8xqB2N, Transaction: c8ee4a2c1bd070005e6cd31b32270aa461c69b927c3f4c28b293c80786f78b43",
                 },
             },
         ],
         [
-            {
-                user: "{{user1}}",
+        {
+            user: "{{user1}}",
                 content: {
                     text: "Please move 2.5 TON to EQByzSQE5Mf_UBf5YYVF_fRhP_oZwM_h7mGAymWBjxkY5yVm",
                     action: "SEND_TON_TOKEN",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{user2}}",
                 content: {
                     text: "Initiating transfer of 2.5 TON...",
                     action: "SEND_TON_TOKEN",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{user2}}",
                 content: {
                     text: "Successfully sent 2.5 TON to EQByzSQE5Mf_UBf5YYVF_fRhP_oZwM_h7mGAymWBjxkY5yVm, Transaction: c8ee4a2c1bd070005e6cd31b32270aa461c69b927c3f4c28b293c80786f78b43",
                 },
             },
         ],
     ] as ActionExample[][],
-};
+} as Action;

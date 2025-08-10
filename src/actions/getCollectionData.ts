@@ -7,7 +7,7 @@ import {
   type Memory,
   type State,
   type HandlerCallback,
-  Content, ActionExample,
+  Content, ActionExample, Action, ActionResult,
 } from "@elizaos/core";
 import {
   Address,
@@ -104,8 +104,9 @@ class GetCollectionDataAction {
       try {
         const ownerAddress = collectionDataResult.stack.readAddress();
         ownerAddressStr = ownerAddress.toString();
-      } catch (e) {
-        elizaLogger.error("Error reading owner address:", e);
+      } catch (error) {
+        // @ts-ignore
+        elizaLogger.error("Error reading owner address:", error);
         ownerAddressStr = null;
       }
 
@@ -125,8 +126,9 @@ class GetCollectionDataAction {
           denominator,
           destination
         };
-      } catch (e) {
-        elizaLogger.error("Error fetching royalty parameters:", e);
+      } catch (error) {
+        // @ts-ignore
+        elizaLogger.error("Error fetching royalty parameters:", error);
       }
 
       // Get NFT items by index
@@ -144,8 +146,9 @@ class GetCollectionDataAction {
             index: i,
             address: nftAddress
           });
-        } catch (e) {
-          elizaLogger.error(`Error fetching NFT address for index ${i}:`, e);
+        } catch (error) {
+          // @ts-ignore
+          elizaLogger.error(`Error fetching NFT address for index ${i}:`, error);
         }
       }
 
@@ -212,7 +215,7 @@ export default {
     state: State,
     _options: Record<string, unknown>,
     callback?: HandlerCallback
-  ) => {
+  ): Promise<ActionResult | void | undefined>  => {
     elizaLogger.log("Starting GET_NFT_COLLECTION_DATA handler...");
 
     try {
@@ -226,7 +229,10 @@ export default {
             content: { error: "Invalid get collection data content" },
           });
         }
-        return false;
+        return {
+          success: false,
+          error: "Invalid get collection data content",
+        };
       }
 
       const walletProvider = await initWalletProvider(runtime);
@@ -254,7 +260,9 @@ export default {
           content: collectionData,
         });
       }
-      return true;
+      return {
+        success: true
+      };
     } catch (error: any) {
       elizaLogger.error("Error fetching collection data:", error);
       if (callback) {
@@ -263,7 +271,9 @@ export default {
           content: { error: error.message },
         });
       }
-      return false;
+      return {
+        success: false,
+      };
     }
   },
   validate: async (_runtime: IAgentRuntime) => true,
@@ -279,11 +289,11 @@ export default {
         },
       },
       {
-        user: "{{user1}}",
+        name: "{{user1}}",
         content: {
           text: "Collection data fetched successfully. Owner: EQ..., Royalty: 5% to EQ..., Contains 10 NFT items.",
         },
       },
     ],
   ] as ActionExample[][],
-};
+} as Action;

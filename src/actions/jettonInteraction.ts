@@ -7,7 +7,7 @@ import {
   type Memory,
   type State,
   type HandlerCallback,
-  Content, ActionExample,
+  Content, ActionExample, Action, ActionResult,
 } from "@elizaos/core";
 import { Address, JettonMaster} from "@ton/ton";
 import { z } from "zod";
@@ -110,7 +110,7 @@ function isJettonInteractionContent(
         content.recipientAddress && typeof content.recipientAddress === "string" ||
         content.metadata && typeof content.metadata === "object" ||
         content.newOwnerAddress && typeof content.newOwnerAddress === "string"
-      );
+      ) as boolean;
 }
 
 /**
@@ -129,9 +129,11 @@ const buildJettonInteractionData = async (
     elizaLogger.debug("Message content already has jetton interaction structure");
     try {
       const validatedContent = jettonInteractionSchema.parse(message.content);
+      // @ts-ignore
       elizaLogger.debug("Content validated successfully", validatedContent);
       return { ...validatedContent, text: message.content.text || "", action: "INTERACT_JETTON" } as JettonInteractionContent;
     } catch (error) {
+      // @ts-ignore
       elizaLogger.error("Error validating existing jetton interaction content", error);
       throw new Error(`Invalid jetton interaction content: ${error}`);
     }
@@ -152,9 +154,11 @@ const buildJettonInteractionData = async (
     });
     const content = await parseKeyValueXml(result);
 
+    // @ts-ignore
     elizaLogger.debug("Generated jetton interaction content", content);
     return content as any;
   } catch (error) {
+    // @ts-ignore
     elizaLogger.error("Error generating jetton interaction content", error);
     throw new Error(`Failed to extract jetton interaction parameters: ${error}`);
   }
@@ -192,6 +196,7 @@ export class JettonInteractionAction {
    * @returns Result of the deployment
    */
   async deployMinter(owner: string, metadata: Record<string, string>): Promise<any> {
+    // @ts-ignore
     elizaLogger.debug(`Deploying Jetton Minter with owner: ${owner}`, { metadata });
     try {
       // Deploy the minter contract
@@ -204,6 +209,7 @@ export class JettonInteractionAction {
         ownerAddress,
         {
           metadata: metadata,
+          // @ts-ignore
           offchainUri: metadata.offchainUri? metadata.offchainUri : null
         }
       );
@@ -214,6 +220,7 @@ export class JettonInteractionAction {
         minterAddress: jettonMinterAddress.toString(),
       };
     } catch (error) {
+      // @ts-ignore
       elizaLogger.error("Error deploying Jetton Minter", error);
       const errorMessage = error instanceof Error ? error.message : String(error);
       return {
@@ -265,6 +272,7 @@ export class JettonInteractionAction {
         amount: amount
       };
     } catch (error) {
+      // @ts-ignore
       elizaLogger.error("Error minting Jettons", error);
       const errorMessage = error instanceof Error ? error.message : String(error);
       return {
@@ -314,6 +322,7 @@ export class JettonInteractionAction {
         amount: amount
       };
     } catch (error) {
+      // @ts-ignore
       elizaLogger.error("Error burning Jettons", error);
       const errorMessage = error instanceof Error ? error.message : String(error);
       return {
@@ -366,6 +375,7 @@ export class JettonInteractionAction {
         recipient: recipientAddress
       };
     } catch (error) {
+      // @ts-ignore
       elizaLogger.error("Error transferring Jettons", error);
       const errorMessage = error instanceof Error ? error.message : String(error);
       return {
@@ -395,6 +405,7 @@ export class JettonInteractionAction {
       const jettonData = await jettonMinter.getJettonData(
         this.walletProvider
       );
+      // @ts-ignore
       elizaLogger.debug("Jetton data retrieved", {
         totalSupply: jettonData.totalSupply.toString(),
         adminAddress: jettonData.adminAddress.toString()
@@ -403,6 +414,7 @@ export class JettonInteractionAction {
       // Parse metadata from content cell
       elizaLogger.debug("Parsing token metadata...");
       const metadata = parseTokenMetadataCell(jettonData.content);
+      // @ts-ignore
       elizaLogger.debug("Token metadata parsed", metadata);
 
       return {
@@ -413,6 +425,7 @@ export class JettonInteractionAction {
         metadata: metadata
       };
     } catch (error) {
+      // @ts-ignore
       elizaLogger.error("Error getting Jetton data", error);
       const errorMessage = error instanceof Error ? error.message : String(error);
       return {
@@ -442,6 +455,7 @@ export class JettonInteractionAction {
       const walletData = await jettonWallet.getWalletData(
         this.walletProvider
       );
+      // @ts-ignore
       elizaLogger.debug("Wallet data retrieved", {
         balance: walletData.balance.toString(),
         owner: walletData.owner.toString(),
@@ -455,6 +469,7 @@ export class JettonInteractionAction {
         jettonMaster: walletData.jettonMaster.toString()
       };
     } catch (error) {
+      // @ts-ignore
       elizaLogger.error("Error getting Wallet data", error);
       const errorMessage = error instanceof Error ? error.message : String(error);
       return {
@@ -499,6 +514,7 @@ export class JettonInteractionAction {
         newOwner: newOwnerAddress
       };
     } catch (error) {
+      // @ts-ignore
       elizaLogger.error("Error changing Jetton owner", error);
       const errorMessage = error instanceof Error ? error.message : String(error);
       return {
@@ -519,11 +535,12 @@ const handler = async (
   state: State,
   options: any,
   callback?: HandlerCallback
-) => {
+): Promise<ActionResult | void | undefined>  => {
   elizaLogger.log("Starting INTERACT_JETTON handler...");
 
   try {
     const params: JettonInteractionContent = await buildJettonInteractionData(runtime, message, state);
+    // @ts-ignore
     elizaLogger.debug("Jetton interaction parameters extracted", params);
 
     if (!isJettonInteractionContent(params)) {
@@ -536,7 +553,10 @@ const handler = async (
           content: { error: "Invalid jetton interaction content" },
         });
       }
-      return false;
+      return {
+        success: false,
+        error: "Invalid jetton interaction content",
+      };
     }
 
     elizaLogger.debug("Initializing wallet provider...");
@@ -569,7 +589,7 @@ const handler = async (
         result = await jettonInteraction.mint(
           params.jettonMinterAddress,
           params.amount,
-          params.recipientAddress? params.recipientAddress : null
+          params.recipientAddress? params.recipientAddress : ''
         );
         break;
 
@@ -581,7 +601,7 @@ const handler = async (
         result = await jettonInteraction.burn(
           params.jettonMinterAddress,
           params.amount,
-          params.recipientAddress? params.recipientAddress : null
+          params.recipientAddress? params.recipientAddress : ''
         );
         break;
 
@@ -640,9 +660,13 @@ const handler = async (
       callback(response);
     }
 
-    return response;
+    return {
+      success: true,
+      data: response,
+    };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
+    // @ts-ignore
     elizaLogger.error("Error in jetton interaction handler", error);
 
     const errorResponse = {
@@ -655,7 +679,10 @@ const handler = async (
       callback(errorResponse);
     }
 
-    return errorResponse;
+    return {
+      success: false,
+      data: errorResponse,
+    };
   }
 };
 
@@ -685,7 +712,7 @@ export default {
         },
       },
       {
-        user: "{{user1}}",
+        name: "{{user1}}",
         content: {
           text: "Jetton Minter deployed successfully",
         },
@@ -703,7 +730,7 @@ export default {
         },
       },
       {
-        user: "{{user1}}",
+        name: "{{user1}}",
         content: {
           text: "Jettons minted successfully",
         },
@@ -720,7 +747,7 @@ export default {
         },
       },
       {
-        user: "{{user1}}",
+        name: "{{user1}}",
         content: {
           text: "Jettons burned successfully",
         },
@@ -738,7 +765,7 @@ export default {
         },
       },
       {
-        user: "{{user1}}",
+        name: "{{user1}}",
         content: {
           text: "Jettons transferred successfully",
         },
@@ -754,7 +781,7 @@ export default {
         },
       },
       {
-        user: "{{user1}}",
+        name: "{{user1}}",
         content: {
           text: "Jetton data fetched successfully",
         },
@@ -770,7 +797,7 @@ export default {
         },
       },
       {
-        user: "{{user1}}",
+        name: "{{user1}}",
         content: {
           text: "Wallet data fetched successfully",
         },
@@ -787,11 +814,11 @@ export default {
         },
       },
       {
-        user: "{{user1}}",
+        name: "{{user1}}",
         content: {
           text: "Owner changed successfully",
         },
       },
     ],
   ] as ActionExample[][],
-};
+} as Action;

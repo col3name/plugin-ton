@@ -7,7 +7,7 @@ import {
   type Memory,
   type State,
   type HandlerCallback,
-  Content, ActionExample,
+  Content, ActionExample, Action, ActionResult,
 } from "@elizaos/core";
 import { z } from "zod";
 import { initWalletProvider, WalletProvider } from "../providers/wallet";
@@ -137,6 +137,7 @@ export class BidAuctionAction {
       return receipt;
     } catch (error) {
       elizaLogger.error(`Error bidding on NFT ${nftAddress}: ${error}`);
+      // @ts-ignore
       throw new Error(`Failed to bid on NFT: ${error.message}`);
     }
   }
@@ -153,7 +154,7 @@ export default {
     state: State,
     options: any,
     callback?: HandlerCallback
-  ) => {
+  ) : Promise<ActionResult | void | undefined> => {
     elizaLogger.log("Starting BID_AUCTION handler...");
     const params = await buildBidAuctionData(runtime, message, state);
 
@@ -164,7 +165,7 @@ export default {
           content: { error: "Invalid bid content" },
         });
       }
-      return false;
+      return { success: true, error: "Invalid bid content"  };
     }
 
     try {
@@ -188,7 +189,7 @@ export default {
         });
       }
     }
-    return true;
+    return { success: true, };
   },
   template: bidAuctionTemplate,
   // eslint-disable-next-line
@@ -206,7 +207,7 @@ export default {
         },
       },
       {
-        user: "{{user1}}",
+        name: "{{user1}}",
         content: {
           text: "Bid placed successfully",
         },
@@ -221,11 +222,11 @@ export default {
         },
       },
       {
-        user: "{{user1}}",
+        name: "{{user1}}",
         content: {
           text: "Bid placed successfully with minimum valid bid",
         },
       },
     ]
   ] as ActionExample[][],
-};
+} as Action;

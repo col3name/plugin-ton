@@ -7,7 +7,7 @@ import {
   type Memory,
   type State,
   type HandlerCallback,
-  Content, ActionExample,
+  Content, ActionExample, Action,
 } from "@elizaos/core";
 import { Address, internal, SendMode, toNano } from "@ton/ton";
 import { z } from "zod";
@@ -173,7 +173,9 @@ export default {
           content: { error: "Invalid create listing content" },
         });
       }
-      return false;
+      return {
+        success: false,
+      };
     }
 
     try {
@@ -197,7 +199,9 @@ export default {
         });
       }
     }
-    return true;
+    return {
+      success: true,
+    };
   },
   template: createListingTemplate,
   // eslint-disable-next-line
@@ -215,11 +219,11 @@ export default {
         },
       },
       {
-        user: "{{user1}}",
+        name: "{{user1}}",
         content: {
           text: "NFT listed for sale successfully",
         },
       },
     ],
   ] as ActionExample[][],
-};
+} as Action;

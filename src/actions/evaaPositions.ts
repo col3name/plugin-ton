@@ -570,13 +570,13 @@ const positionsAction: Action = {
     examples: [
         [
             {
-                user: '{{user1}}',
+                name: '{{user1}}',
                 content: {
                     text: 'Show me my positions and accrued interest from the EVAA protocol',
                 }
             },
             {
-                user: '{{agentName}}',
+                name: '{{agentName}}',
                 content: {
                     text: '{{responseData}}',
                     action: 'POSITIONS'
@@ -585,20 +585,20 @@ const positionsAction: Action = {
         ],
         [
             {
-                user: '{{user1}}',
+                name: '{{user1}}',
                 content: {
                     text: 'What is my current health factor across all positions?'
                 }
             },
             {
-                user: '{{agentName}}',
+                name: '{{agentName}}',
                 content: {
                     text: '{{responseData}}',
                     action: 'POSITIONS'
                 }
             }
         ]
-    ] as ActionExample[][],
+    ],
 };
 
 export default positionsAction;

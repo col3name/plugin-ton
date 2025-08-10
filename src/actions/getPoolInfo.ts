@@ -7,7 +7,7 @@ import {
     ModelType as ModelClass,
     type IAgentRuntime,
     type Memory,
-    type State, ActionExample,
+    type State, ActionExample, Action,
 } from "@elizaos/core";
 import { z } from "zod";
 import { initStakingProvider, IStakingProvider } from "../providers/staking";
@@ -47,6 +47,7 @@ export class GetPoolInfoAction {
             );
             return poolInfo;
         } catch (error) {
+            // @ts-ignore
             throw new Error(`Fetching pool info failed: ${error.message}`);
         }
     }
@@ -107,7 +108,9 @@ export default {
                     content: { error: "Invalid pool info content" },
                 });
             }
-            return false;
+            return {
+                success: false
+            };
         }
 
         try {
@@ -121,42 +124,49 @@ export default {
                     content: poolInfo,
                 });
             }
-            return true;
+            return {
+                success: true
+            };
         } catch (error) {
+            // @ts-ignore
             elizaLogger.error("Error fetching pool info:", error);
             if (callback) {
                 callback({
+                    // @ts-ignore
                     text: `Error fetching pool info: ${error.message}`,
+                    // @ts-ignore
                     content: { error: error.message },
                 });
             }
-            return false;
+            return {
+                success: false
+            };
         }
     },
     template: getPoolInfoTemplate,
     validate: async (runtime: IAgentRuntime) => true,
     examples: [
         [
-            {
-                user: "{{user1}}",
+        {
+            user: "{{user1}}",
                 content: {
                     text: "Get info for pool pool123",
                     action: "GET_POOL_INFO",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{user2}}",
                 content: {
                     text: "Fetching pool info...",
                     action: "GET_POOL_INFO",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{user2}}",
                 content: {
                     text: 'Fetched pool info for pool pool123: { "totalStaked": 1000, "rewardRate": 0.05, ...}',
                 },
             },
         ],
     ] as ActionExample[][],
-};
+} as Action;

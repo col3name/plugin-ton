@@ -7,10 +7,10 @@ import {
   Content,
   composePromptFromState,
   parseKeyValueXml,
-  ModelType as ModelClass, ActionExample,
+  ModelType as ModelClass, ActionExample, Action, ActionResult,
 } from "@elizaos/core";
-import { WalletProvider } from "../providers/wallet";
-import { z } from "zod";
+import {WalletProvider} from "../providers/wallet";
+import {z} from "zod";
 
 export interface CreateWalletContent extends Content {
   encryptionPassword: string;
@@ -71,7 +71,7 @@ export async function buildCreateWalletDetails(
   let createWalletContent: CreateWalletContent = passwordData as CreateWalletContent;
 
   if (createWalletContent === undefined) {
-      createWalletContent = passwordData as unknown as CreateWalletContent;
+    createWalletContent = passwordData as unknown as CreateWalletContent;
   }
 
   return createWalletContent;
@@ -79,15 +79,24 @@ export async function buildCreateWalletDetails(
 
 export class CreateWalletAction {
   private runtime: IAgentRuntime;
+
   constructor(runtime: IAgentRuntime) {
-      this.runtime = runtime;
+    this.runtime = runtime;
   }
 
-  async createWallet(params: {rpcUrl: string, encryptionPassword: string}): Promise<{walletAddress: string, mnemonic: string[]}> {
+  async createWallet(params: { rpcUrl: string, encryptionPassword: string }): Promise<{
+    walletAddress: string,
+    mnemonic: string[]
+  }> {
 
-      const { walletProvider, mnemonic } = await WalletProvider.generateNew(params.rpcUrl, params.encryptionPassword, this.runtime.cacheManager);
-      const walletAddress = walletProvider.getAddress();
-      return {walletAddress, mnemonic};
+    // @ts-ignore
+    const cacheManager = this.runtime.cacheManager;
+    const {
+      walletProvider,
+      mnemonic
+    } = await WalletProvider.generateNew(params.rpcUrl, params.encryptionPassword, cacheManager);
+    const walletAddress = walletProvider.getAddress();
+    return {walletAddress, mnemonic};
   }
 }
 
@@ -95,67 +104,76 @@ export default {
   name: "CREATE_TON_WALLET",
   similes: ["NEW_TON_WALLET", "MAKE_NEW_TON_WALLET"],
   description:
-      "Creates a new TON wallet on demand. Returns the public address and mnemonic backup (store it securely). The wallet keypair is also encrypted to a file using the provided password.",
+    "Creates a new TON wallet on demand. Returns the public address and mnemonic backup (store it securely). The wallet keypair is also encrypted to a file using the provided password.",
   handler: async (
-      runtime: IAgentRuntime,
-      message: Memory,
-      state: State,
-      _options: Record<string, unknown>,
-      callback?: HandlerCallback,
+    runtime: IAgentRuntime,
+    message: Memory,
+    state: State,
+    _options: Record<string, unknown>,
+    callback?: HandlerCallback,
   ) => {
-      elizaLogger.log("Starting CREATE_TON_WALLET action...");
+    elizaLogger.log("Starting CREATE_TON_WALLET action...");
 
-      // Build password details using the object building approach like in the mint NFT action.
-      const createWalletContent = await buildCreateWalletDetails(runtime, message, state);
+    // Build password details using the object building approach like in the mint NFT action.
+    const createWalletContent = await buildCreateWalletDetails(runtime, message, state);
 
-      elizaLogger.debug("createWalletContent", createWalletContent);
-      if(!isCreateWalletContent(createWalletContent)) {
-          if(callback) {
-              callback({
-                  text: "Unable to process create wallet request. No password provided.",
-                  content: { error: "Invalid create wallet. No password provided." },
-              });
-          }
-          return false;
+    elizaLogger.debug("createWalletContent", createWalletContent as any);
+    if (!isCreateWalletContent(createWalletContent)) {
+      if (callback) {
+        callback({
+          text: "Unable to process create wallet request. No password provided.",
+          content: {error: "Invalid create wallet. No password provided."},
+        });
       }
-      try {
-          // Generate a new wallet using the provided password.
+      return {
+        success: false,
+      };
+    }
+    try {
+      // Generate a new wallet using the provided password.
 
-          const rpcUrl = runtime.getSetting("TON_RPC_URL") || "https://toncenter.com/api/v2/jsonRPC";
-          const action = new CreateWalletAction(runtime);
+      const rpcUrl = runtime.getSetting("TON_RPC_URL") || "https://toncenter.com/api/v2/jsonRPC";
+      const action = new CreateWalletAction(runtime);
 
-          const { walletAddress, mnemonic } = await action.createWallet({rpcUrl, encryptionPassword: createWalletContent.encryptionPassword});
-          const result = {
-              status: "success",
-              walletAddress,
-              mnemonic, // IMPORTANT: The mnemonic backup must be stored securely!
-              message: "New TON wallet created. Store the mnemonic securely for recovery.",
-          };
+      const {walletAddress, mnemonic} = await action.createWallet({
+        rpcUrl,
+        encryptionPassword: createWalletContent.encryptionPassword
+      });
+      const result = {
+        status: "success",
+        walletAddress,
+        mnemonic, // IMPORTANT: The mnemonic backup must be stored securely!
+        message: "New TON wallet created. Store the mnemonic securely for recovery.",
+      };
 
-          if (callback) {
-              callback({
-                  text: `
+      if (callback) {
+        callback({
+          text: `
 New TON wallet created!
 Your password was used to encrypt the wallet keypair, but never stored.
 Wallet Address: ${walletAddress}
 I've used both your password and the mnemonic to create the wallet.
 Please securely store your mnemonic:
 ${mnemonic.join(" ")}`,
-                  content: result,
-              });
-          }
-
-          return true;
-      } catch (error: any) {
-          elizaLogger.error("Error creating wallet:", error);
-          if (callback) {
-              callback({
-                  text: `Error creating wallet: ${error.message}`,
-                  content: { error: error.message },
-              });
-          }
-          return false;
+          content: result,
+        });
       }
+
+      return {
+        success: true,
+      };
+    } catch (error: any) {
+      elizaLogger.error("Error creating wallet:", error);
+      if (callback) {
+        callback({
+          text: `Error creating wallet: ${error.message}`,
+          content: {error: error.message},
+        });
+      }
+      return {
+        success: false,
+      } as ActionResult;
+    }
   },
   validate: async (_runtime: IAgentRuntime) => true,
   examples: [
@@ -168,7 +186,7 @@ ${mnemonic.join(" ")}`,
         },
       },
       {
-        user: "{{user1}}",
+        name: "{{user1}}",
         content: {
           text: "New TON wallet created!/n Your password was used to encrypt the wallet keypair, but never stored./nWallet Address: EQAXxxxxxxxxxxxxxxxxxxxxxx./n I've used both your password and the mnemonic to create the wallet./nPlease securely store your mnemonic",
         },
@@ -184,11 +202,11 @@ ${mnemonic.join(" ")}`,
         },
       },
       {
-        user: "{{user1}}",
+        name: "{{user1}}",
         content: {
           text: "New TON wallet created!/n Your password was used to encrypt the wallet keypair, but never stored./nWallet Address: EQAXxxxxxxxxxxxxxxxxxxxxxx./n I've used both your password and the mnemonic to create the wallet./nPlease securely store your mnemonic",
         },
       },
     ]
   ] as ActionExample[][],
-};
+} as Action;

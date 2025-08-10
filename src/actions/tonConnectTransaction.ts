@@ -7,7 +7,7 @@ import {
     ModelType as ModelClass,
     type IAgentRuntime,
     type Memory,
-    type State, ActionExample,
+    type State, ActionExample, Action,
 } from "@elizaos/core";
 import { z } from "zod";
 import {
@@ -172,7 +172,9 @@ export default {
 
         // exit if TONCONNECT is not used
         if (!runtime.getSetting('TON_MANIFEST_URL')) {
-            return false
+            return {
+                success: false
+            };
         }
 
         try {
@@ -185,7 +187,9 @@ export default {
                         content: { error: "Wallet not connected" },
                     });
                 }
-                return false;
+                return {
+                    success: false
+                };
             }
 
             const transactionDetails =
@@ -205,7 +209,9 @@ export default {
                         content: { error: "Invalid transaction content" },
                     });
                 }
-                return false;
+                return {
+                    success: false
+                };
             }
 
             const action = new TonConnectSendTransactionAction();
@@ -225,7 +231,9 @@ export default {
                 });
             }
 
-            return true;
+            return {
+                success: true
+            };
         } catch (error) {
             console.error("Error during transaction:", error);
             if (callback) {
@@ -234,7 +242,9 @@ export default {
                     content: { error: error.message },
                 });
             }
-            return false;
+            return {
+                success: false,
+            };
         }
     },
     template: tonConnectSendTransactionTemplate,
@@ -243,26 +253,26 @@ export default {
     },
     examples: [
         [
-            {
-                user: "{{user1}}",
+        {
+            user: "{{user1}}",
                 content: {
                     text: "Send 1 TON to EQCGScrZe1xbyWqWDvdI6mzP-GAcAWFv6ZXuaJOuSqemxku4 with payload te6cckEBAQEAAgAAAEysuc0=",
                     action: "SEND_TRANSACTION_TONCONNECT",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{user2}}",
                 content: {
                     text: "Processing transaction via TonConnect...",
                     action: "SEND_TRANSACTION_TONCONNECT",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{user2}}",
                 content: {
                     text: "Successfully sent transaction. Transaction: c8ee4a2c1bd070005e6cd31b32270aa461c69b927c3f4c28b293c80786f78b43",
                 },
             },
         ],
     ] as ActionExample[][],
-};
+} as Action;

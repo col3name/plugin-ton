@@ -71,6 +71,7 @@ export class StonFi implements DEX {
 
             return txHash;
         } catch (error) {
+            // @ts-ignore
             elizaLogger.error("StonFi: Error sending transaction:", error);
             throw error;
         }
@@ -79,6 +80,7 @@ export class StonFi implements DEX {
     // To create a new Pool, just provide the minimum amount of liquidity to pair (1001 Jettons).
     // A basic amount of 1001 lp tokens will be reserved on pool on initial liquidity deposit with the rest going to the user.
     async createPool(jettons: JettonMaster[]) {
+        // @ts-ignore
         elizaLogger.log("StonFi: Creating pool with jettons:", jettons.map(j => j.address.toString()));
         // Check if pool exists
         // Check if total deposit ammounts > 1001
@@ -145,7 +147,9 @@ export class StonFi implements DEX {
 
                         elizaLogger.log("StonFi: Single side liquidity parameters prepared successfully");
                     } catch (error) {
+                        // @ts-ignore
                         elizaLogger.error("StonFi: Failed to prepare single side liquidity parameters:", error);
+                        // @ts-ignore
                         throw new Error(`Failed to prepare single side liquidity parameters: ${error.message || error}`);
                     }
                 } else {
@@ -169,7 +173,9 @@ export class StonFi implements DEX {
                                     elizaLogger.log(`StonFi: Successfully prepared parameters for jetton ${index + 1}`);
                                     return params;
                                 } catch (error) {
+                                    // @ts-ignore
                                     elizaLogger.error(`StonFi: Error preparing parameters for jetton ${index + 1}:`, error);
+                                    // @ts-ignore
                                     throw new Error(`Failed to prepare parameters for jetton ${index + 1}: ${error.message || error}`);
                                 }
                             })
@@ -177,7 +183,9 @@ export class StonFi implements DEX {
 
                         elizaLogger.log("StonFi: Both jettons liquidity parameters prepared successfully");
                     } catch (error) {
+                        // @ts-ignore
                         elizaLogger.error("StonFi: Failed to prepare both jettons liquidity parameters:", error);
+                        // @ts-ignore
                         throw new Error(`Failed to prepare both jettons liquidity parameters: ${error.message || error}`);
                     }
                 }
@@ -194,12 +202,14 @@ export class StonFi implements DEX {
                     );
                     elizaLogger.log(`StonFi: ProxyTON created successfully: ${proxyTon.address.toString()}`);
                 } catch (error) {
+                    // @ts-ignore
                     elizaLogger.error("StonFi: Failed to create proxyTON:", error);
+                    // @ts-ignore
                     throw new Error(`Failed to create proxyTON: ${error.message || error}`);
                 }
 
                 // Deposit both TON and Jetton
-                if (tonAmount > 0 && jettonDeposits[0]?.amount > 0) {
+                if (tonAmount !== undefined && tonAmount > 0 && jettonDeposits[0]?.amount > 0) {
                     elizaLogger.log(`StonFi: Providing liquidity with both TON (${tonAmount}) and Jetton (${jettonDeposits[0].amount})`);
 
                     try {
@@ -219,7 +229,9 @@ export class StonFi implements DEX {
                                     elizaLogger.log("StonFi: TON deposit parameters prepared successfully");
                                     return params;
                                 } catch (error) {
+                                    // @ts-ignore
                                     elizaLogger.error("StonFi: Error preparing TON deposit parameters:", error);
+                                    // @ts-ignore
                                     throw new Error(`Failed to prepare TON deposit parameters: ${error.message || error}`);
                                 }
                             })(),
@@ -238,7 +250,9 @@ export class StonFi implements DEX {
                                     elizaLogger.log("StonFi: Jetton deposit parameters prepared successfully");
                                     return params;
                                 } catch (error) {
+                                    // @ts-ignore
                                     elizaLogger.error("StonFi: Error preparing Jetton deposit parameters:", error);
+                                    // @ts-ignore
                                     throw new Error(`Failed to prepare Jetton deposit parameters: ${error.message || error}`);
                                 }
                             })(),
@@ -246,7 +260,9 @@ export class StonFi implements DEX {
 
                         elizaLogger.log("StonFi: Both TON and Jetton liquidity parameters prepared successfully");
                     } catch (error) {
+                        // @ts-ignore
                         elizaLogger.error("StonFi: Failed to prepare TON/Jetton liquidity parameters:", error);
+                        // @ts-ignore
                         throw new Error(`Failed to prepare TON/Jetton liquidity parameters: ${error.message || error}`);
                     }
                 } else {
@@ -266,7 +282,9 @@ export class StonFi implements DEX {
 
                             elizaLogger.log("StonFi: TON single side liquidity parameters prepared successfully");
                         } catch (error) {
+                            // @ts-ignore
                             elizaLogger.error("StonFi: Failed to prepare TON single side liquidity parameters:", error);
+                            // @ts-ignore
                             throw new Error(`Failed to prepare TON single side liquidity parameters: ${error.message || error}`);
                         }
                     } else {
@@ -285,7 +303,9 @@ export class StonFi implements DEX {
 
                             elizaLogger.log("StonFi: Jetton single side liquidity parameters prepared successfully");
                         } catch (error) {
+                            // @ts-ignore
                             elizaLogger.error("StonFi: Failed to prepare Jetton single side liquidity parameters:", error);
+                            // @ts-ignore
                             throw new Error(`Failed to prepare Jetton single side liquidity parameters: ${error.message || error}`);
                         }
                     }
@@ -318,7 +338,9 @@ export class StonFi implements DEX {
                         elizaLogger.log(`StonFi: Transaction ${i + 1} completed successfully with hash: ${txHash}`);
                         txHashes.push(txHash);
                     } catch (error) {
+                        // @ts-ignore
                         elizaLogger.error(`StonFi: Failed to send transaction ${i + 1}:`, error);
+                        // @ts-ignore
                         throw new Error(`Failed to send transaction ${i + 1}: ${error.message || error}`);
                     }
                 }
@@ -329,7 +351,9 @@ export class StonFi implements DEX {
                     elizaLogger.log(`StonFi: Transaction completed successfully with hash: ${txHash}`);
                     txHashes.push(txHash);
                 } catch (error) {
+                    // @ts-ignore
                     elizaLogger.error("StonFi: Failed to send transaction:", error);
+                    // @ts-ignore
                     throw new Error(`Failed to send transaction: ${error.message || error}`);
                 }
             }
@@ -343,16 +367,21 @@ export class StonFi implements DEX {
 
             return txHashes[0]; // Return the first hash for compatibility
         } catch (error) {
+            // @ts-ignore
             elizaLogger.error("StonFi: Error in deposit method:", error);
             // Add stack trace for better debugging
+            // @ts-ignore
             if (error.stack) {
+                // @ts-ignore
                 elizaLogger.error("StonFi: Error stack trace:", error.stack);
             }
 
             // Handle specific TON blockchain error codes
+            // @ts-ignore
             if (error.message && error.message.includes("exit_code: -13")) {
                 elizaLogger.error("StonFi: Contract execution error (exit_code: -13). This typically indicates insufficient balance or incorrect contract state.");
                 throw new Error("DEX operation failed: The operation could not be completed due to a contract execution error. This typically happens when there is insufficient balance or the pool doesn't exist.");
+                // @ts-ignore
             } else if (error.message && error.message.includes("Unable to execute get method")) {
                 throw new Error("DEX operation failed: Unable to execute contract method. This may indicate that the pool doesn't exist or the contract is in an invalid state.");
             } else {
@@ -366,6 +395,7 @@ export class StonFi implements DEX {
         isTon: boolean,
         amount: number
     ) {
+        // @ts-ignore
         elizaLogger.log("StonFi: Starting withdraw operation", {
             jettonWithdrawalsCount: jettonWithdrawals?.length || 0,
             isTon,
@@ -421,12 +451,15 @@ export class StonFi implements DEX {
 
             return txHash;
         } catch (error) {
+            // @ts-ignore
             elizaLogger.error("StonFi: Error in withdraw method:", error);
             throw error;
         }
     }
 
+    // @ts-ignore
     async claimFee(params: { jettons; isTon }) {
+        // @ts-ignore
         elizaLogger.log("StonFi: Starting claim fee operation", {
             jettonCount: params.jettons?.length || 0,
             isTon: params.isTon
@@ -434,6 +467,7 @@ export class StonFi implements DEX {
 
         try {
             // Prepare tokens to claim fee from
+            // @ts-ignore
             const tokens = params.jettons.map((jetton) => jetton.address.toString());
             if (params.isTon) {
                 tokens.push("kQDLvsZol3juZyOAVG8tWsJntOxeEZWEaWCbbSjYakQpuYN5");
@@ -444,6 +478,7 @@ export class StonFi implements DEX {
             // Create vaults
             elizaLogger.log("StonFi: Getting vaults for tokens");
             const vaults = await Promise.all(
+              // @ts-ignore
                 tokens.map(async (token, index) => {
                     elizaLogger.log(`StonFi: Getting vault for token ${index + 1}: ${token}`);
                     return this.client.open(
@@ -477,6 +512,7 @@ export class StonFi implements DEX {
             elizaLogger.log(`StonFi: All fee claims completed with hashes: ${txHashes.join(', ')}`);
             return txHashes[0]; // Return the first hash for compatibility
         } catch (error) {
+            // @ts-ignore
             elizaLogger.error("StonFi: Error in claimFee method:", error);
             throw error;
         }

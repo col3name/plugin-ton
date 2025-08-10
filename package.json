@@ -1,6 +1,6 @@
 {
   "name": "@elizaos/plugin-ton",
-  "version": "1.0.0",
+  "version": "1.4.2",
   "type": "module",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -38,6 +38,7 @@
   },
   "devDependencies": {
     "@types/bun": "latest",
+    "@types/node": "latest",
     "@types/qrcode": "^1.5.5",
     "bun": "^1.2.15",
     "prettier": "^3.0.0",
@@ -45,7 +46,7 @@
     "typescript": "^5.0.0"
   },
   "scripts": {
-    "build": "tsup",
+    "build": "tsup --dts",
     "dev": "tsup --watch",
     "lint": "prettier --write ./src",
     "clean": "rm -rf dist .turbo node_modules .turbo-tsconfig.json tsconfig.tsbuildinfo",
@@ -59,11 +60,17 @@
     "whatwg-url": "7.1.0"
   },
   "agentConfig": {
-    "pluginType": "elizaos:plugin:1.0.0",
+    "pluginType": "elizaos:plugin:1.4.2",
     "pluginParameters": {
-      "YOUR_PARAMETER_NAME": {
+      "TON_PRIVATE_KEY": {
         "type": "string",
-        "description": "Description of what this parameter does",
+        "description": "Ton private key is required",
+        "required": true,
+        "sensitive": true
+      },
+      "TON_RPC_URL": {
+        "type": "string",
+        "description": "TON network RPC endpoint URL",
         "required": true,
         "sensitive": true
       }

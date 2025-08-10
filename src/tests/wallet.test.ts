@@ -1,4 +1,4 @@
-import { defaultCharacter } from "@elizaos/core";
+import {defaultCharacter, type IAgentRuntime} from "@elizaos/core";
 
 import {
     describe,
@@ -45,7 +45,7 @@ const testnet = "https://testnet.toncenter.com/api/v2/jsonRPC";
 describe("Wallet provider", () => {
     let walletProvider: WalletProvider;
     let keypair: KeyPair;
-    let mockedRuntime;
+    let mockedRuntime: IAgentRuntime;
 
     beforeAll(async () => {
         const password = "";
@@ -54,7 +54,7 @@ describe("Wallet provider", () => {
         walletProvider = new WalletProvider(keypair, testnet, mockCacheManager);
         mockedRuntime = {
             character: defaultCharacter,
-        };
+        } as IAgentRuntime;
     });
 
     beforeEach(() => {

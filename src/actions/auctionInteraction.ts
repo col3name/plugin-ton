@@ -1,21 +1,28 @@
 import {
-  elizaLogger,
+  type Action,
+  type ActionExample,
+  ActionResult,
   composePromptFromState,
-  parseKeyValueXml,
-  ModelType as ModelClass,
+  type Content,
+  elizaLogger,
+  type HandlerCallback,
   type IAgentRuntime,
   type Memory,
+  ModelType as ModelClass,
+  parseKeyValueXml,
   type State,
-  type HandlerCallback,
-  Content, ActionExample,
 } from "@elizaos/core";
 
-import { Address, internal, SendMode, toNano, beginCell } from "@ton/ton";
-import { Builder } from "@ton/ton";
-import { z } from "zod";
-import { initWalletProvider, WalletProvider } from "../providers/wallet";
-import { waitSeqnoContract } from "../utils/util";
-import { buildNftFixPriceSaleV3R3DeploymentBody, destinationAddress, marketplaceAddress, marketplaceFeeAddress } from "../services/nft-marketplace/listingFactory";
+import {Address, Builder, internal, SendMode, toNano} from "@ton/ton";
+import {z} from "zod";
+import {initWalletProvider, WalletProvider} from "../providers/wallet";
+import {waitSeqnoContract} from "../utils/util";
+import {
+  buildNftFixPriceSaleV3R3DeploymentBody,
+  destinationAddress,
+  marketplaceAddress,
+  marketplaceFeeAddress
+} from "../services/nft-marketplace/listingFactory";
 
 /**
  * Schema for auction interaction input.
@@ -281,6 +288,7 @@ export class AuctionInteractionAction {
         message: "Auction sale data fetched successfully",
       };
     } catch (parseError) {
+      // @ts-ignore
       elizaLogger.error("Error parsing sale data:", parseError);
       return { error: "Failed to parse sale data" };
     }
@@ -421,7 +429,7 @@ export class AuctionInteractionAction {
     const fee = 5;
 
     const saleData = {
-      nftAddress: Address.parse(params.nftAddress),
+      nftAddress: Address.parse(params?.nftAddress || ''),
       nftOwnerAddress: this.walletProvider.wallet.address,
       deployerAddress: destinationAddress,
       marketplaceAddress: marketplaceAddress,
@@ -436,7 +444,7 @@ export class AuctionInteractionAction {
 
     const seqno = await contract.getSeqno();
     const listMessage = internal({
-      to: params.nftAddress,
+      to: params?.nftAddress || '',
       value: toNano("0.3"), // Sufficient value for all operations
       bounce: true,
       body: saleBody
@@ -653,20 +661,27 @@ export class AuctionInteractionAction {
   }
 }
 
-export default {
+const action: Action = {
   name: "INTERACT_AUCTION",
   similes: ["AUCTION_INTERACT", "AUCTION_ACTION"],
   description:
     "Interacts with an auction contract. Supports actions: getSaleData, bid, stop, and cancel.",
-  handler: async (
-    runtime: IAgentRuntime,
-    message: Memory,
-    state: State,
-    options: any,
-    callback?: HandlerCallback
-  ) => {
+  handler: async(
+    runtime: IAgentRuntime, message: Memory, state?: State, options?: Record<string, unknown>, callback?: HandlerCallback): Promise<ActionResult | void | undefined> => {
     elizaLogger.log("Starting INTERACT_AUCTION handler...");
-    const params = await buildAuctionInteractionData(runtime, message, state);
+    if (!state) {
+      if (callback) {
+        callback({
+          text: "Unable to process auction interaction request. Invalid content provided.",
+          content: { error: "Invalid get auction interaction content" },
+        });
+      }
+      return {
+        success: false,
+        error: "Invalid get auction interaction content",
+      };
+    }
+    const params: AuctionInteractionContent = await buildAuctionInteractionData(runtime, message, state);
 
     if (!isAuctionInteractionContent(params)) {
       if (callback) {
@@ -675,7 +690,10 @@ export default {
           content: { error: "Invalid get auction interaction content" },
         });
       }
-      return false;
+      return {
+        success: false,
+        error: "Invalid get auction interaction content",
+      };
     }
 
     try {
@@ -740,9 +758,11 @@ export default {
         });
       }
     }
-    return true;
+    return {
+      success: true,
+    };
   },
-  template: auctionInteractionTemplate,
+  // template: auctionInteractionTemplate,
   // eslint-disable-next-line
   validate: async (_runtime: IAgentRuntime) => {
     return true;
@@ -758,7 +778,7 @@ export default {
         },
       },
       {
-        user: "{{user1}}",
+        name: "{{user1}}",
         content: {
           text: "Auction sale data fetched successfully",
         },
@@ -776,7 +796,7 @@ export default {
         },
       },
       {
-        user: "{{user1}}",
+        name: "{{user1}}",
         content: {
           text: "Bid placed successfully",
         },
@@ -793,7 +813,7 @@ export default {
         },
       },
       {
-        user: "{{user1}}",
+        name: "{{user1}}",
         content: {
           text: "Stop auction message sent successfully",
         },
@@ -810,7 +830,7 @@ export default {
         },
       },
       {
-        user: "{{user1}}",
+        name: "{{user1}}",
         content: {
           text: "Cancel auction message sent successfully",
         },
@@ -833,7 +853,7 @@ export default {
         },
       },
       {
-        user: "{{user1}}",
+        name: "{{user1}}",
         content: {
           text: "NFT listed for sale successfully",
         },
@@ -849,7 +869,7 @@ export default {
         },
       },
       {
-        user: "{{user1}}",
+        name: "{{user1}}",
         content: {
           text: "Buy message sent successfully",
         },
@@ -866,7 +886,7 @@ export default {
         },
       },
       {
-        user: "{{user1}}",
+        name: "{{user1}}",
         content: {
           text: "Price changed successfully",
         },
@@ -883,7 +903,7 @@ export default {
         },
       },
       {
-        user: "{{user1}}",
+        name: "{{user1}}",
         content: {
           text: "Value added to offer successfully",
         },
@@ -899,7 +919,7 @@ export default {
         },
       },
       {
-        user: "{{user1}}",
+        name: "{{user1}}",
         content: {
           text: "Offer cancelled successfully",
         },
@@ -915,7 +935,7 @@ export default {
         },
       },
       {
-        user: "{{user1}}",
+        name: "{{user1}}",
         content: {
           text: "Offer data fetched successfully",
         },
@@ -923,3 +943,4 @@ export default {
     ],
   ] as ActionExample[][],
 };
+export default action as Action;

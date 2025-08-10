@@ -103,7 +103,7 @@ export class GetLendingInfoAction {
     }
 
     async getLendingInfo(params: LendingInfoContent): Promise<LendingData> {
-        // console.log(`Getting lending info for user: ${params.userAddress}`);
+        // console.log(`Getting lending info for name: ${params.userAddress}`);
         // {  "userAddress": "EQCGScrZe1xbyWqWDvdI6mzP-GAcAWFv6ZXuaJOuSqemxku4" }
 
         const walletClient = this.walletProvider.getWalletClient();
@@ -267,26 +267,26 @@ export default {
     template: getLendingInfoTemplate,
     // eslint-disable-next-line
     validate: async (_runtime: IAgentRuntime) => {
-        //console.log("Validating TON transfer from user:", message.userId);
+        //console.log("Validating TON transfer from name:", message.userId);
         return true;
     },
     examples: [
         [
-            {
-                user: "{{user1}}",
+        {
+            user: "{{user1}}",
                 content: {
                     text: "Show lending info for EQCGScrZe1xbyWqWDvdI6mzP-GAcAWFv6ZXuaJOuSqemxku4",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{user2}}",
                 content: {
                     text: "I'll get lending info now",
                     action: "GET_LENDING_INFO",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{user2}}",
                 content: {
                     text: `Lending info for user address EQCGScrZe1xbyWqWDvdI6mzP-GAcAWFv6ZXuaJOuSqemxku4
 Borrow balance: 50$
@@ -298,21 +298,21 @@ Health factor (account could be liquidated if < 0): 0.32`,
             },
         ],
         [
-            {
-                user: "{{user1}}",
+        {
+            user: "{{user1}}",
                 content: {
                     text: "Get lending info for EQCD39VS5jcptHL8vMjEXrzGaRcCVYto7HUn4bpAOg8xqB2N",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{user2}}",
                 content: {
                     text: "Sure, getting lending info for EQCD39VS5jcptHL8vMjEXrzGaRcCVYto7HUn4bpAOg8xqB2N...",
                     action: "GET_LENDING_INFO",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{user2}}",
                 content: {
                     text: `Lending info for user address EQCD39VS5jcptHL8vMjEXrzGaRcCVYto7HUn4bpAOg8xqB2N
 Borrow balance: 102.1$
@@ -324,21 +324,21 @@ Health factor (account could be liquidated if < 0): 0.72`,
             },
         ],
         [
-            {
-                user: "{{user1}}",
+        {
+            user: "{{user1}}",
                 content: {
                     text: "Show me lending info in TON blockchain for EQCD39VS5jcptHL8vMjEXrzGaRcCVYto7HUn4bpAOg8xqB2N",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{user2}}",
                 content: {
                     text: "I will get lending info for EQCD39VS5jcptHL8vMjEXrzGaRcCVYto7HUn4bpAOg8xqB2N...",
                     action: "GET_LENDING_INFO",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{user2}}",
                 content: {
                     text: `Lending info for user address EQCD39VS5jcptHL8vMjEXrzGaRcCVYto7HUn4bpAOg8xqB2N
 Borrow balance: 22$
@@ -350,25 +350,25 @@ Health factor (account could be liquidated if < 0): 0.133`,
             },
         ],
         [
-            {
-                user: "{{user1}}",
+        {
+            user: "{{user1}}",
                 content: {
                     text: "I want to see lending info for EQCD39VS5jcptHL8vMjEXrzGaRcCVYto7HUn4bpAOg8xqB2N",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{user2}}",
                 content: {
                     text: "Getting lending info for EQCD39VS5jcptHL8vMjEXrzGaRcCVYto7HUn4bpAOg8xqB2N...",
                     action: "GET_LENDING_INFO",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{user2}}",
                 content: {
                     text: "Lending contract for EQCD39VS5jcptHL8vMjEXrzGaRcCVYto7HUn4bpAOg8xqB2N is inactive, seems like user hasn't interacted with it yet",
                 },
             },
         ],
-    ] as ActionExample[][],
+    ],
 };

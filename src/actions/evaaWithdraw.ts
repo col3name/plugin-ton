@@ -251,7 +251,7 @@ export class WithdrawAction {
                     throw new Error("TON asset not found in master data");
                 }
                 elizaLogger.debug('Borrow amount', borrowAmount.toFixed(4));
-                elizaLogger.debug('Borrow limits',this.borrowLimits);
+                elizaLogger.debug('Borrow limits', this.borrowLimits);
                 // Calculate estimated rates
                 const assetRates = calculateCurrentRates(tonAsset.config, tonAsset.data, this.masterConstants);
 
@@ -469,14 +469,14 @@ const withdrawAction: Action = {
     },
     examples: [
         [
-            {
-                user: "{{user1}}",
+        {
+            user: "{{user1}}",
                 content: {
                     text: "I want to withdraw 1 TON from the EVAA protocol",
                 },
             },
             {
-                user: "{{agentName}}",
+                name: "{{agentName}}",
                 content: {
                     text: "I'll help you withdraw 1 TON from the EVAA protocol. Processing your request...",
                     action: "WITHDRAW_TON",
@@ -484,21 +484,21 @@ const withdrawAction: Action = {
             },
         ],
         [
-            {
-                user: "{{user1}}",
+        {
+            user: "{{user1}}",
                 content: {
                     text: "Can you withdraw 0.5 TON from EVAA with user code included?",
                 },
             },
             {
-                user: "{{agentName}}",
+                name: "{{agentName}}",
                 content: {
                     text: "I'll help you withdraw 0.5 TON from EVAA with user code included. Processing your request...",
                     action: "WITHDRAW_TON",
                 },
             },
         ],
-    ] as ActionExample[][],
+    ],
 };
 
 export default withdrawAction;

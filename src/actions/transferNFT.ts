@@ -7,7 +7,7 @@ import {
   type Content,
   composePromptFromState,
   parseKeyValueXml,
-  ModelType as ModelClass, ActionExample,
+  ModelType as ModelClass, ActionExample, Action, ActionResult,
 } from "@elizaos/core";
 import { Address, beginCell, Cell, internal, toNano } from "@ton/ton";
 import { z } from "zod";
@@ -128,9 +128,13 @@ class TransferNFTAction {
           this.walletProvider.wallet.address,
       );
 
+      if (!state.lastTransaction) {
+        throw new Error("Transfer failed");
+      }
       const { lt: _, hash: lastHash } = state.lastTransaction;
       return base64ToHex(lastHash);
     } catch (error) {
+      // @ts-ignore
       throw new Error(`Transfer failed: ${error.message}`);
     }
   }
@@ -188,7 +192,7 @@ export default {
     state: State,
     _options: Record<string, unknown>,
     callback?: HandlerCallback
-  ) => {
+  ): Promise<ActionResult | void | undefined>  => {
     elizaLogger.log("Starting TRANSFER_NFT handler...");
 
     const transferDetails = await buildTransferNFTContent(
@@ -206,7 +210,10 @@ export default {
                 content: { error: "Invalid transfer content" },
             });
         }
-        return false;
+        return {
+          success: false,
+          error: "Invalid transfer content",
+        };
     }
     try {
 
@@ -258,7 +265,9 @@ export default {
           content: response,
         });
       }
-      return true;
+      return {
+        success: true
+      };
     } catch (error: any) {
       elizaLogger.error("Error transferring NFT:", error);
       if (callback) {
@@ -267,7 +276,10 @@ export default {
           content: { error: error.message },
         });
       }
-      return false;
+      return {
+        success: false,
+        error,
+      };
     }
   },
   validate: async (_runtime: IAgentRuntime) => true,
@@ -276,7 +288,7 @@ export default {
     [
       {
         user: "{{user1}}",
-        // text: "Transfer NFT with address {{nftAddress}} from {{user1}} to {{user2}}",
+        text: "Transfer NFT with address {{nftAddress}} from {{user1}} to {{user2}}",
         content: {
           nftAddress: "NFT_123456789",
           newOwner: "EQNewOwnerAddressExample",
@@ -284,11 +296,11 @@ export default {
         },
       },
       {
-        user: "{{user1}}",
+        name: "{{user1}}",
         content: {
           text: "NFT ownership transfer initiated successfully",
         },
       },
-    ] as ActionExample[][],
-  ],
-};
+    ],
+  ] as ActionExample[][],
+} as Action;

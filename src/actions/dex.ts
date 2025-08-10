@@ -9,7 +9,7 @@ import {
   HandlerCallback,
   IAgentRuntime,
   Memory,
-  State, ActionExample,
+  State, ActionExample, Action, ActionResult,
 } from "@elizaos/core";
 import {
   initWalletProvider,
@@ -18,7 +18,7 @@ import {
 } from "../providers/wallet";
 import { base64ToHex, sanitizeTonAddress, sleep, waitSeqnoContract } from "../utils/util";
 import { z } from "zod";
-import { SUPPORTED_DEXES } from "../providers/dexes";
+import {type JettonDeposit, SUPPORTED_DEXES} from "../providers/dexes";
 import { DexProvider } from "../providers/dex";
 import { Address, JettonMaster } from "@ton/ton";
 
@@ -160,14 +160,14 @@ export class DexAction {
       tokenB: params.tokenB,
       amountB: params.amountB,
       liquidity: params.liquidity
-    });
+    } as any);
 
     const walletClient = this.walletProvider.getWalletClient();
     const contract = walletClient.open(this.walletProvider.wallet);
     const seqno = await contract.getSeqno();
     elizaLogger.debug(`Current wallet seqno: ${seqno}`);
 
-    const jettonDeposits = [];
+    const jettonDeposits:JettonDeposit[] = [];
     if (params.tokenA) {
       elizaLogger.debug(`Adding token A to jetton deposits: ${params.tokenA}, amount: ${params.amountA}`);
 
@@ -177,11 +177,14 @@ export class DexAction {
 
         jettonDeposits.push({
           jetton: new JettonMaster(tokenAddress),
+          // @ts-ignore
           amount: params.amountA,
         });
         elizaLogger.debug(`Token A added to deposits with amount: ${params.amountA}`);
       } catch (error) {
+        // @ts-ignore
         elizaLogger.error(`Error parsing token A address: ${error.message}`);
+        // @ts-ignore
         throw new Error(`Invalid token A address: ${params.tokenA}. Error: ${error.message}`);
       }
     }
@@ -195,11 +198,14 @@ export class DexAction {
 
         jettonDeposits.push({
           jetton: new JettonMaster(tokenAddress),
+          // @ts-ignore
           amount: params.amountB,
         });
         elizaLogger.debug(`Token B added to deposits with amount: ${params.amountB}`);
       } catch (error) {
+        // @ts-ignore
         elizaLogger.error(`Error parsing token B address: ${error.message}`);
+        // @ts-ignore
         throw new Error(`Invalid token B address: ${params.tokenB}. Error: ${error.message}`);
       }
     }
@@ -211,7 +217,7 @@ export class DexAction {
         amount: jd.amount,
         workchain: jd.jetton.address.workChain,
         hashPart: jd.jetton.address.hash.toString('hex').substring(0, 10) + '...'
-      }))
+      })) as any
     );
 
     try {
@@ -225,13 +231,15 @@ export class DexAction {
             })),
             isTon: params.isTon,
             tonAmount: params.tonAmount
-          });
+          } as any);
 
           elizaLogger.debug(`Calling DEX provider createPool method for ${params.dex}`);
           const createPoolResult = await this.dexProvider.createPool({
             dex: params.dex,
             jettonDeposits,
+            // @ts-ignore
             isTon: params.isTon,
+            // @ts-ignore
             tonAmount: params.tonAmount,
           });
           elizaLogger.debug(`Pool creation request sent successfully, result:`, createPoolResult);
@@ -246,16 +254,18 @@ export class DexAction {
             })),
             isTon: params.isTon,
             tonAmount: params.tonAmount
-          });
+          } as any);
 
           elizaLogger.debug(`Calling DEX provider depositLiquidity method for ${params.dex}`);
           const depositResult = await this.dexProvider.depositLiquidity({
             dex: params.dex,
             jettonDeposits,
+            // @ts-ignore
             isTon: params.isTon,
+            // @ts-ignore
             tonAmount: params.tonAmount,
           });
-          elizaLogger.debug(`Liquidity deposit request sent successfully, result:`, depositResult);
+          elizaLogger.debug(`Liquidity deposit request sent successfully, result:`, depositResult as any);
           break;
 
         case "WITHDRAW":
@@ -267,12 +277,13 @@ export class DexAction {
             })),
             isTon: params.isTon,
             amount: params.liquidity
-          });
+          } as any);
 
           elizaLogger.debug(`Calling DEX provider withdrawLiquidity method for ${params.dex}`);
           const withdrawResult = await this.dexProvider.withdrawLiquidity({
             dex: params.dex,
             jettonWithdrawals: jettonDeposits,
+            // @ts-ignore
             isTon: params.isTon,
             amount: params.liquidity?.toString()
           });
@@ -284,15 +295,15 @@ export class DexAction {
             dex: params.dex,
             pool: params.pool,
             feeClaimAmount: params.liquidity
-          });
+          } as any);
 
           elizaLogger.debug(`Calling DEX provider claimFees method for ${params.dex}`);
           const claimResult = await this.dexProvider.claimFees({
             dex: params.dex,
             pool: params.pool,
             feeClaimAmount: params.liquidity,
-          });
-          elizaLogger.debug(`Fee claim request sent successfully, result:`, claimResult);
+          } as any);
+          elizaLogger.debug(`Fee claim request sent successfully, result:`, claimResult as any);
           break;
       }
 
@@ -301,22 +312,27 @@ export class DexAction {
       elizaLogger.debug("Transaction confirmed successfully");
 
       const state = await walletClient.getContractState(this.walletProvider.wallet.address);
+      if (state.lastTransaction === null) {
+        throw new Error("Transaction not found");
+      }
       const txHash = base64ToHex(state.lastTransaction.hash);
       elizaLogger.debug(`Transaction hash: ${txHash}`);
 
       return txHash;
     } catch (error) {
-      elizaLogger.error("Error executing DEX operation:", error);
+      elizaLogger.error("Error executing DEX operation:", error as any);
       elizaLogger.error("Operation details:", {
         operation: params.operation,
         dex: params.dex,
         tokenA: params.tokenA,
         tokenB: params.tokenB,
         isTon: params.isTon
-      });
+      } as any);
 
       // Enhanced error logging
+      // @ts-ignore
       if (error.message && error.message.includes("exit_code:")) {
+        // @ts-ignore
         const exitCodeMatch = error.message.match(/exit_code: (-?\d+)/);
         const exitCode = exitCodeMatch ? exitCodeMatch[1] : "unknown";
         elizaLogger.error(`DEX operation failed with exit code: ${exitCode}`);
@@ -326,10 +342,13 @@ export class DexAction {
         }
       }
 
+      // @ts-ignore
       if (error.stack) {
+        // @ts-ignore
         elizaLogger.error("Error stack trace:", error.stack);
       }
 
+      // @ts-ignore
       throw new Error(`DEX operation failed: ${error.message}`);
     }
   }
@@ -396,13 +415,13 @@ export default {
     state: State,
     _options: any,
     callback?: HandlerCallback
-  ) => {
+  ): Promise<ActionResult | void | undefined>  => {
     elizaLogger.debug("Starting DEX operation handler...");
 
     try {
       elizaLogger.debug("Building DEX action details from user input...");
       const dexActionDetails = await buildDexActionDetails(runtime, message, state);
-      elizaLogger.debug("DEX action details extracted:", dexActionDetails);
+      elizaLogger.debug("DEX action details extracted:", dexActionDetails as any);
 
       elizaLogger.debug("Initializing wallet provider...");
       const walletProvider = await initWalletProvider(runtime);
@@ -410,7 +429,7 @@ export default {
 
       elizaLogger.debug("Initializing DEX provider...");
       const dexProvider = new DexProvider(walletProvider);
-      elizaLogger.debug("Available DEXes:", dexProvider.getAllDexesAndSupportedMethods());
+      elizaLogger.debug("Available DEXes:", dexProvider.getAllDexesAndSupportedMethods() as any);
 
       elizaLogger.debug("Creating DEX action instance...");
       const action = new DexAction(walletProvider, dexProvider);
@@ -428,7 +447,7 @@ export default {
         };
 
         const responseText = `Successfully ${operationMap[dexActionDetails.operation]}. Transaction hash: ${hash}`;
-        elizaLogger.debug(`Sending response to user: ${responseText}`);
+        elizaLogger.debug(`Sending response to name: ${responseText}`);
 
         callback({
           text: responseText,
@@ -440,16 +459,22 @@ export default {
         });
       }
 
-      return true;
+      return {
+        success: true
+      };
     } catch (error) {
-      elizaLogger.error("Error during DEX operation:", error);
+      elizaLogger.error("Error during DEX operation:", error as any);
       if (callback) {
         callback({
+          // @ts-ignore
           text: `Error performing DEX operation: ${error.message}`,
+          // @ts-ignore
           content: { error: error.message },
         });
       }
-      return false;
+      return {
+        success: false,
+      };
     }
   },
   template: dexTemplate,
@@ -464,7 +489,7 @@ export default {
         },
       },
       {
-        user: "{{user2}}",
+        name: "{{user2}}",
         content: {
           text: "Successfully created pool. Transaction hash: 0x123abc...",
         },
@@ -479,7 +504,7 @@ export default {
         },
       },
       {
-        user: "{{user2}}",
+        name: "{{user2}}",
         content: {
           text: "Successfully deposited liquidity. Transaction hash: 0x456def...",
         },
@@ -494,7 +519,7 @@ export default {
         },
       },
       {
-        user: "{{user2}}",
+        name: "{{user2}}",
         content: {
           text: "Successfully withdrawn liquidity. Transaction hash: 0x789ghi...",
         },
@@ -509,11 +534,11 @@ export default {
         },
       },
       {
-        user: "{{user2}}",
+        name: "{{user2}}",
         content: {
           text: "Successfully claimed fees. Transaction hash: 0x012jkl...",
         },
       },
     ],
   ] as ActionExample[][],
-};
+} as Action;

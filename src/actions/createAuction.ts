@@ -7,7 +7,7 @@ import {
   type Memory,
   type State,
   type HandlerCallback,
-  Content, ActionExample,
+  Content, ActionExample, Action,
 } from "@elizaos/core";
 import { Address, internal, SendMode, toNano } from "@ton/ton";
 import { z } from "zod";
@@ -117,6 +117,7 @@ export class CreateAuctionAction {
     const client = this.walletProvider.getWalletClient();
     const contract = client.open(this.walletProvider.wallet);
 
+    // @ts-ignore
     elizaLogger.info("Creating auction with params: ", params);
 
     const minimumBid = toNano(params.minimumBid);
@@ -139,6 +140,7 @@ export class CreateAuctionAction {
       expiryTime: expiryTime,
     };
 
+    // @ts-ignore
     elizaLogger.info("Minbid: ", minimumBid);
 
     const auctionBody = await buildNftAuctionV3R3DeploymentBody(auctionData);
@@ -195,7 +197,9 @@ export default {
           content: { error: "Invalid create auction content" },
         });
       }
-      return false;
+      return {
+        success: false,
+      }
     }
 
     try {
@@ -219,7 +223,9 @@ export default {
         });
       }
     }
-    return true;
+    return {
+      success: false,
+    };
   },
   template: createAuctionTemplate,
   // eslint-disable-next-line
@@ -239,11 +245,11 @@ export default {
         },
       },
       {
-        user: "{{user1}}",
+        name: "{{user1}}",
         content: {
           text: "NFT auction created successfully",
         },
       },
     ],
   ] as ActionExample[][],
-};
+} as Action;

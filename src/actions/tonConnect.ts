@@ -1,5 +1,5 @@
 import {
-  Action, ActionExample,
+  Action, ActionExample, ActionResult,
   elizaLogger,
   GoalStatus,
   HandlerCallback,
@@ -25,7 +25,7 @@ import {
     const existingGoals = await runtime.databaseAdapter.getGoals({
       agentId: runtime.agentId,
       roomId: message.roomId,
-      userId: message.userId,
+      entityId: message.entityId,
       onlyInProgress: true,
     });
 
@@ -38,7 +38,7 @@ import {
 
     const newGoal = await runtime.databaseAdapter.createGoal({
       roomId: message.roomId,
-      userId: message.userId,
+      entityId: message.entityId,
       name: "TON_CONNECT_WALLET",
       status: GoalStatus.IN_PROGRESS,
       objectives: [
@@ -83,7 +83,7 @@ import {
       const existingGoals = await runtime.databaseAdapter.getGoals({
         agentId: runtime.agentId,
         roomId: message.roomId,
-        userId: message.userId,
+        entityId: message.entityId,
         onlyInProgress: true,
       });
 
@@ -103,11 +103,16 @@ import {
       state: State,
       _options: ActionOptions,
       callback?: HandlerCallback
-    ) => {
+    ): Promise<ActionResult | void | undefined > => {
+      console.log('start ton connect handler');
 
       // exit if TONCONNECT is not used
       if (!runtime.getSetting('TON_MANIFEST_URL')) {
-          return false
+        elizaLogger.log("No TON_MANIFEST_URL set. Skipping TON_CONNECT handler...");
+        return {
+          success: false,
+          text: "No TON_MANIFEST_URL set. Skipping TON_CONNECT handler..."
+        }
       }
 
       // Implementation
@@ -129,7 +134,7 @@ import {
         callback?.({
           text: "Error connecting to TON wallet. Please try again later.",
         });
-        return true;
+        return {success: false, text: "Error connecting to TON wallet. Please try again later."};
       }
 
       state.connectorStatus = connectorStatus;
@@ -148,14 +153,15 @@ import {
             `Platform: ${walletInfo.device.platform}\n` +
             `App: ${walletInfo.device.appName || "Unknown"}`,
         });
-        return true;
+        return {success: true, text: 'Connected to TON wallet.'};
       }
 
       if (status === "Disconnected" && tonConnectProvider) {
         const unified = await tonConnectProvider.connect();
         const qrCodeData = await QRCode.toDataURL(unified);
+        let text = `Please connect your TON wallet using this link:\n${unified}`;
         callback?.({
-          text: `Please connect your TON wallet using this link:\n${unified}`,
+          text: text,
           attachments: [
             {
               id: crypto.randomUUID(),
@@ -169,30 +175,30 @@ import {
           ],
         });
 
-        return true;
+        return { success: true, text };
       }
 
       if (status === "Connecting") {
         callback?.({
           text: "Connecting to TON wallet...",
         });
-        return true;
+        return { success: true, text: "Connecting to TON wallet...", };
       }
+      return { success: true, text: "handling", };
 
-      return true;
     },
     examples: [
       // Example 1: Initial connection request
       [
         {
-          user: "{{user1}}",
+          name: "{{user1}}",
           content: {
             text: "Connect my TON wallet",
             action: "TON_CONNECT",
           },
         },
         {
-          user: "{{user2}}",
+          name: "{{user2}}",
           content: {
             text: "Please connect your TON wallet using this link:\nhttps://app.tonkeeper.com/connect/example-universal-link",
           },
@@ -201,14 +207,14 @@ import {
       // Example 2: Successful connection
       [
         {
-          user: "{{user1}}",
+          name: "{{user1}}",
           content: {
             text: "Check my TON wallet connection",
             action: "TON_CONNECT",
           },
         },
         {
-          user: "{{user2}}",
+          name: "{{user2}}",
           content: {
             text: "Connected to TON wallet:\nAddress: EQCGScrZe1xbyWqWDvdI6mzP-GAcAWFv6ZXuaJOuSqemxku4\nChain: mainnet\nPlatform: web",
           },
@@ -217,14 +223,14 @@ import {
       // Example 3: Connection in progress
       [
         {
-          user: "{{user1}}",
+          name: "{{user1}}",
           content: {
             text: "Link TON wallet",
             action: "TON_CONNECT",
           },
         },
         {
-          user: "{{user2}}",
+          name: "{{user2}}",
           content: {
             text: "Connecting to TON wallet...",
           },
@@ -233,14 +239,14 @@ import {
       // Example 4: Error case
       [
         {
-          user: "{{user1}}",
+          name: "{{user1}}",
           content: {
             text: "Connect wallet",
             action: "TON_CONNECT",
           },
         },
         {
-          user: "{{user2}}",
+          name: "{{user2}}",
           content: {
             text: "Error connecting to TON wallet. Please try again later.",
           },
@@ -315,14 +321,14 @@ import {
       // Example 1: Successful disconnection
       [
         {
-          user: "{{user1}}",
+          name: "{{user1}}",
           content: {
             text: "Disconnect my TON wallet",
             action: "TON_DISCONNECT",
           },
         },
         {
-          user: "{{user2}}",
+          name: "{{user2}}",
           content: {
             text: "Successfully disconnected from TON wallet.",
           },
@@ -331,14 +337,14 @@ import {
       // Example 2: Error case
       [
         {
-          user: "{{user1}}",
+          name: "{{user1}}",
           content: {
             text: "Disconnect wallet",
             action: "TON_DISCONNECT",
           },
         },
         {
-          user: "{{user2}}",
+          name: "{{user2}}",
           content: {
             text: "Error disconnecting from TON wallet. Please try again later.",
           },
@@ -427,20 +433,22 @@ import {
           });
       }
 
-      return true;
+      return {
+        success: true,
+      };
     },
     examples: [
       // Example 1: Connected wallet status
       [
         {
-          user: "{{user1}}",
+          name: "{{user1}}",
           content: {
             text: "Show my wallet status",
             action: "TON_CONNECTION_STATUS",
           },
         },
         {
-          user: "{{user2}}",
+          name: "{{user2}}",
           content: {
             text:
               "Current wallet status: Connected\n" +
@@ -454,14 +462,14 @@ import {
       // Example 2: Disconnected status
       [
         {
-          user: "{{user1}}",
+          name: "{{user1}}",
           content: {
             text: "Check wallet connection",
             action: "TON_CONNECTION_STATUS",
           },
         },
         {
-          user: "{{user2}}",
+          name: "{{user2}}",
           content: {
             text: "Wallet status: Not connected\nUse TON_CONNECT to connect your wallet.",
           },
@@ -470,18 +478,18 @@ import {
       // Example 3: Connecting status
       [
         {
-          user: "{{user1}}",
+          name: "{{user1}}",
           content: {
             text: "What's my wallet status",
             action: "TON_CONNECTION_STATUS",
           },
         },
         {
-          user: "{{user2}}",
+          name: "{{user2}}",
           content: {
             text: "Wallet status: Connection in progress...",
           },
         },
       ],
     ] as ActionExample[][],
-  };
+  } as Action;

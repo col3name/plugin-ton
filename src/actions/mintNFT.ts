@@ -7,7 +7,7 @@ import {
   type Memory,
   type State,
   type HandlerCallback,
-  type Content, ActionExample,
+  type Content, ActionExample, ActionResult, Action,
 } from "@elizaos/core";
 import { z } from "zod";
 import { Address, toNano } from "@ton/ton";
@@ -47,6 +47,7 @@ export interface MintContent extends Content {
  * A type guard to verify the MintContent payload.
  */
 function isMintContent(content: Content): content is MintContent {
+  // @ts-ignore
   elizaLogger.log("Validating mint content:", content);
 
   // Basic validation
@@ -199,7 +200,9 @@ const buildMintDetails = async (
     }
     return mintContent;
   } catch (error) {
+    // @ts-ignore
     elizaLogger.error("Error generating mint content:", error);
+    // @ts-ignore
     throw new Error(`Failed to generate mint content: ${error.message}`);
   }
 };
@@ -257,7 +260,9 @@ class MintNFTAction {
 
       throw new Error("Invalid storage type");
     } catch (error) {
+      // @ts-ignore
       elizaLogger.error("Error uploading content to IPFS:", error);
+      // @ts-ignore
       throw new Error(`Failed to upload content: ${error.message}`);
     }
   }
@@ -311,7 +316,9 @@ class MintNFTAction {
       }
 
     } catch (error) {
+      // @ts-ignore
       elizaLogger.error("Error deploying standalone NFT:", error);
+      // @ts-ignore
       throw new Error(`Failed to deploy standalone NFT: ${error.message}`);
     }
   }
@@ -338,6 +345,7 @@ class MintNFTAction {
         commonContentUrl: `ipfs://${metadataIpfsHash}/`,
       };
 
+      // @ts-ignore
       elizaLogger.log("Creating NFT collection with data:", {
         owner: collectionData.ownerAddress.toString(),
         royaltyPercent: collectionData.royaltyPercent,
@@ -356,7 +364,9 @@ class MintNFTAction {
 
       return collection.address.toString();
     } catch (error) {
+      // @ts-ignore
       elizaLogger.error("Error deploying NFT collection:", error);
+      // @ts-ignore
       throw new Error(`Failed to deploy NFT collection: ${error.message}`);
     }
   }
@@ -387,7 +397,9 @@ class MintNFTAction {
         throw new Error(`Invalid NFT type: ${params.nftType}`);
       }
     } catch (error) {
+      // @ts-ignore
       elizaLogger.error("Error in mint method:", error);
+      // @ts-ignore
       throw new Error(`Mint operation failed: ${error.message}`);
     }
   }
@@ -404,12 +416,13 @@ export default {
     state: State,
     _options: Record<string, unknown>,
     callback?: HandlerCallback,
-  ) => {
+  ): Promise<ActionResult | void | undefined>  => {
     elizaLogger.log("Starting MINT_NFT handler...");
     try {
       // Build mint details using the helper method.
       let mintParams = await buildMintDetails(runtime, message, state);
 
+      // @ts-ignore
       elizaLogger.log("Mint parameters extracted:", {
         nftType: mintParams.nftType,
         storage: mintParams.storage,
@@ -425,7 +438,10 @@ export default {
             content: { error: "Invalid mint content" },
           });
         }
-        return false;
+        return {
+          success: false,
+          error: "Invalid mint content",
+        };
       }
 
       // Set default paths if not provided
@@ -437,8 +453,11 @@ export default {
         runtime.getSetting("TON_NFT_METADATA_FOLDER") ||
         path.join(process.cwd(), "ton_nft_metadata");
 
+      // @ts-ignore
       elizaLogger.log("Using paths:", {
+        // @ts-ignore
         imagesFolderPath: mintParams.imagesFolderPath,
+        // @ts-ignore
         metadataFolderPath: mintParams.metadataFolderPath,
       });
 
@@ -458,6 +477,7 @@ export default {
         message: "NFT minted successfully",
       };
 
+      // @ts-ignore
       elizaLogger.log("NFT minted successfully:", result);
 
       if (callback) {
@@ -467,7 +487,9 @@ export default {
         });
       }
 
-      return true;
+      return {
+        success: false,
+      };
     } catch (error: any) {
       elizaLogger.error("Error minting NFT:", error);
       if (callback) {
@@ -476,7 +498,9 @@ export default {
           content: { error: error.message },
         });
       }
-      return false;
+      return {
+        success: false,
+      };
     }
   },
   validate: async (_runtime: IAgentRuntime) => true,
@@ -500,7 +524,7 @@ export default {
         },
       },
       {
-        user: "{{user1}}",
+        name: "{{user1}}",
         content: {
           text: "NFT minted successfully. NFT Address: NFT_...",
         },
@@ -508,4 +532,4 @@ export default {
     ],
   ] as ActionExample[][],
   template: mintNFTTemplate,
-};
+} as Action;

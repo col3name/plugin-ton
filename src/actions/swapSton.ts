@@ -10,7 +10,7 @@ import {
     type State,
     type ActionExample,
     type Action,
-    generateTrueOrFalse,
+    // generateTrueOrFalse,
 } from "@elizaos/core";
 import { z } from "zod";
 import { sleep } from "../utils/util";
@@ -421,7 +421,7 @@ export const swapStonAction = {
     name: "SWAP_TOKEN_STON",
     similes: ["SWAP_TOKENS_STON"],
     validate: async (runtime: IAgentRuntime, message: Memory) => {
-        elizaLogger.log("Validating config for user:", message.userId);
+        elizaLogger.log("Validating config for name:", message.entityId);
         await validateEnvConfig(runtime);
         return true;
     },
@@ -469,68 +469,68 @@ export const swapStonAction = {
     },
     examples: [
         [
-            {
-                user: "{{user1}}",
+        {
+            user: "{{user1}}",
                 content: {
                     text: "Swap 1 TON for USDC",
                 },
             },
             {
-                user: "{{agent}}",
+                name: "{{agent}}",
                 content: {
                     text: "Are you sure you want to swap 1 TON for USDC...",
                     action: "SWAP_TOKEN_STON",
                 },
             },
             {
-                user: "{{user1}}",
+                name: "{{user1}}",
                 content: {
                     text: "Yes, I want to finish the swap",
                 },
             },
             {
-                user: "{{agent}}",
+                name: "{{agent}}",
                 content: {
                     text: "Ok, I will proceed with the swap...",
                     action: "FINISH_SWAP_TOKENS_STON",
                 },
             },
             {
-                user: "{{agent}}",
+                name: "{{agent}}",
                 content: {
                     text: "Successfully swapped 1 TON for {{dynamic}} USDC, Transaction: {{dynamic}}",
                 },
             },
         ],
         [
-            {
-                user: "{{user1}}",
+        {
+            user: "{{user1}}",
                 content: {
                     text: "Swap 1 TON for USDC",
                 },
             },
             {
-                user: "{{agent}}",
+                name: "{{agent}}",
                 content: {
                     text: "Are you sure you want to swap 1 TON for USDC...",
                     action: "SWAP_TOKEN_STON",
                 },
             },
             {
-                user: "{{user1}}",
+                name: "{{user1}}",
                 content: {
                     text: "no, I decided not to do it",
                 },
             },
             {
-                user: "{{agent}}",
+                name: "{{agent}}",
                 content: {
                     text: "Ok, I will cancel the swap...",
                     action: "FINISH_SWAP_TOKENS_STON",
                 },
             },
             {
-                user: "{{agent}}",
+                name: "{{agent}}",
                 content: {
                     text: "The swap has been canceled",
                 },
@@ -543,7 +543,7 @@ export const finishSwapStonAction = {
     name: "FINISH_SWAP_TOKEN_STON",
     similes: ["FINISH_SWAP_TOKENS_STON"],
     validate: async (runtime: IAgentRuntime, message: Memory) => {
-        elizaLogger.log("Validating config for user:", message.userId);
+        elizaLogger.log("Validating config for name:", message.entityId);
         await validateEnvConfig(runtime);
         return true;
     },
@@ -590,74 +590,74 @@ export const finishSwapStonAction = {
     },
     examples: [
         [
-            {
-                user: "{{user1}}",
+        {
+            user: "{{user1}}",
                 content: {
                     text: "Swap 1 TON for USDC",
                 },
             },
             {
-                user: "{{agent}}",
+                name: "{{agent}}",
                 content: {
                     text: "Are you sure you want to swap 1 TON for USDC...",
                     action: "SWAP_TOKEN_STON",
                 },
             },
             {
-                user: "{{user1}}",
+                name: "{{user1}}",
                 content: {
                     text: "Yes, I want to finish the swap",
                 },
             },
             {
-                user: "{{agent}}",
+                name: "{{agent}}",
                 content: {
                     text: "Ok, I will proceed with the swap...",
                     action: "SWAP_TOKEN_STON",
                 },
             },
             {
-                user: "{{agent}}",
+                name: "{{agent}}",
                 content: {
                     text: "Successfully swapped 1 TON for {{dynamic}} USDC, Transaction: {{dynamic}}",
                 },
             },
         ],
         [
-            {
-                user: "{{user1}}",
+        {
+            user: "{{user1}}",
                 content: {
                     text: "Swap 1 TON for USDC",
                 },
             },
             {
-                user: "{{agent}}",
+                name: "{{agent}}",
                 content: {
                     text: "Are you sure you want to swap 1 TON for USDC...",
                     action: "SWAP_TOKEN_STON",
                 },
             },
             {
-                user: "{{user1}}",
+                name: "{{user1}}",
                 content: {
                     text: "no, I decided not to do it",
                 },
             },
             {
-                user: "{{agent}}",
+                name: "{{agent}}",
                 content: {
                     text: "Ok, I will cancel the swap...",
                     action: "SWAP_TOKEN_STON",
                 },
             },
             {
-                user: "{{agent}}",
+                name: "{{agent}}",
                 content: {
                     text: "The swap has been canceled",
                 },
             },
         ],
-    ] as ActionExample[][],
+    ],
 } as Action;
 
 
@@ -666,7 +666,7 @@ export const getPendingStonSwapDetailsAction = {
     name: "GET_PENDING_STON_SWAP_DETAILS",
     similes: [],
     validate: async (runtime: IAgentRuntime, message: Memory) => {
-        elizaLogger.log("Validating config for user:", message.userId);
+        elizaLogger.log("Validating config for name:", (message?.entityId.toString() || ''));
         await validateEnvConfig(runtime);
         return true;
     },
@@ -733,19 +733,19 @@ export const getPendingStonSwapDetailsAction = {
     },
     examples: [
         [
-            {
-                user: "{{user1}}",
+        {
+            user: "{{user1}}",
                 content: {
                     text: "What are the details of the pending swap?",
                 },
             },
             {
-                user: "{{agent}}",
+                name: "{{agent}}",
                 content: {
                     text: "The pending swap is 1 TON for USDC",
                     action: "GET_PENDING_SWAP_DETAILS",
                 },
             },
         ],
-    ] as ActionExample[][],
+    ],
 } as Action;

@@ -7,7 +7,7 @@ import {
     ModelType as ModelClass,
     type IAgentRuntime,
     type Memory,
-    type State, ActionExample,
+    type State, ActionExample, Action,
 } from "@elizaos/core";
 import { z } from "zod";
 import { IStakingProvider, StakingProvider, initStakingProvider } from "../providers/staking";
@@ -59,7 +59,8 @@ export class StakeAction {
         try {
             return await this.stakingProvider.stake(params.poolId, Number(params.amount));
         } catch (error) {
-            throw new Error(`Staking failed: ${error.message}`);
+            // @ts-ignore
+            throw new Error(`Staking failed: ${error?.message || ''}`);
         }
     }
 }
@@ -120,7 +121,9 @@ export default {
                     content: { error: "Invalid staking content" },
                 });
             }
-            return false;
+            return {
+                success: false,
+            };
         }
 
         try {
@@ -141,17 +144,27 @@ export default {
                         poolId: stakeDetails.poolId,
                     },
                 });
+                return {
+                    success: false,
+                };
             }
-            return true;
+            return {
+                success: true,
+            };
         } catch (error) {
+            // @ts-ignore
             elizaLogger.error("Error during staking:", error);
             if (callback) {
                 callback({
+                    // @ts-ignore
                     text: `Error staking TON: ${error.message}`,
+                    // @ts-ignore
                     content: { error: error.message },
                 });
             }
-            return false;
+            return {
+                success: false,
+            };
         }
     },
     template: stakeTemplate,
@@ -161,26 +174,26 @@ export default {
     },
     examples: [
         [
-            {
-                user: "{{user1}}",
+        {
+            user: "{{user1}}",
                 content: {
                     text: "Deposit 1.5 TON in pool pool123",
                     action: "DEPOSIT_TON",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{user2}}",
                 content: {
                     text: "I'll deposit 1.5 TON now...",
                     action: "DEPOSIT_TON",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{user2}}",
                 content: {
                     text: "Successfully deposited 1.5 TON in pool pool123, Transaction: abcd1234efgh5678",
                 },
             },
         ],
     ] as ActionExample[][],
-};
+} as Action;

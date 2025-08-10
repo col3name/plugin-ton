@@ -551,14 +551,14 @@ const supplyAction: Action = {
     },
     examples: [
         [
-            {
-                user: "{{user1}}",
+        {
+            user: "{{user1}}",
                 content: {
                     text: "I want to supply 1 TON to the EVAA protocol",
                 },
             },
             {
-                user: "{{agentName}}",
+                name: "{{agentName}}",
                 content: {
                     text: "I'll help you supply 1 TON to the EVAA protocol. Processing your request...",
                     action: "SUPPLY",
@@ -566,21 +566,21 @@ const supplyAction: Action = {
             },
         ],
         [
-            {
-                user: "{{user1}}",
+        {
+            user: "{{user1}}",
                 content: {
                     text: "Can you lend 0.5 TON to EVAA with user code included?",
                 },
             },
             {
-                user: "{{agentName}}",
+                name: "{{agentName}}",
                 content: {
                     text: "I'll help you lend 0.5 TON to EVAA with user code included. Processing your request...",
                     action: "LEND",
                 },
             },
         ],
-    ] as ActionExample[][],
+    ],
 };
 
 export default supplyAction;

@@ -22,18 +22,19 @@ export class TonTokenPriceProvider implements Provider {
   private tokenCache: Map<string, string> = new Map(); // Symbol/Name -> Address
   private poolCache: Map<string, string> = new Map(); // Pair Symbol -> Pool Address
   private cacheTimestamp = 0;
+
   private readonly CACHE_TTL = 300_000; // 5 minutes
   private readonly TONAPI_ENDPOINT = "https://tonapi.io/v2";
   private readonly DEDUST_API_ENDPOINT = "https://api.dedust.io/v1/pools";
   private readonly DEXSCREENER_API_ENDPOINT =
     "https://api.dexscreener.com/latest/dex/pairs/ton";
+  name = "TonTokenPriceProvider";
 
   constructor() {
     this.initializeTokenCache();
     this.initializePoolCache();
   }
 
-  name = "TonTokenPriceProvider";
 
   private async initializeTokenCache(): Promise<void> {
     try {
@@ -41,11 +42,13 @@ export class TonTokenPriceProvider implements Provider {
       const tokens = await response.json();
 
       // Build symbol/name -> address mapping
+      if (tokens && Array.isArray(tokens)) {
+
       tokens.forEach((token: any) => {
         this.tokenCache.set(token.symbol.toLowerCase(), token.address || "TON");
         this.tokenCache.set(token.name.toLowerCase(), token.address || "TON");
       });
-
+      }
       this.cacheTimestamp = Date.now();
     } catch (error) {
       console.error("Failed to initialize token cache:", error);
@@ -57,11 +60,13 @@ export class TonTokenPriceProvider implements Provider {
       const response = await fetch(this.DEDUST_API_ENDPOINT);
       const pools = await response.json();
 
-      // Build pair symbol -> pool address mapping
-      pools.forEach((pool: any) => {
-        const pairSymbol = `${pool.left_token_symbol}/${pool.right_token_symbol}`;
-        this.poolCache.set(pairSymbol.toLowerCase(), pool.address);
-      });
+      if (pools && Array.isArray(pools)) {
+        // Build pair symbol -> pool address mapping
+        pools.forEach((pool: any) => {
+          const pairSymbol = `${pool.left_token_symbol}/${pool.right_token_symbol}`;
+          this.poolCache.set(pairSymbol.toLowerCase(), pool.address);
+        });
+      }
 
       this.cacheTimestamp = Date.now();
     } catch (error) {
@@ -161,6 +166,7 @@ export class TonTokenPriceProvider implements Provider {
     } catch (error) {
       console.error("TonTokenPriceProvider error:", error);
       return {
+        // @ts-ignore
         text: `Error: ${error?.message || ''}`
       };
     }
@@ -266,7 +272,8 @@ export class TonTokenPriceProvider implements Provider {
       }
 
       const data = await response.json();
-      return data.metadata?.name || address; // Fallback to address if name not found;
+      // @ts-ignore
+      return data?.metadata?.name || address; // Fallback to address if name not found;
     } catch (error) {
       console.error("Token metadata fetch error:", error);
       return address; // Return address as fallback name
@@ -331,7 +338,7 @@ export class TonTokenPriceProvider implements Provider {
       }
 
       const data = await response.json();
-      return data;
+      return data as DexScreenerResponse;
     } catch (error) {
       console.error("Fetch pair price error:", error);
       throw error;

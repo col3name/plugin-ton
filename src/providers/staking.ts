@@ -69,6 +69,9 @@ export class StakingProvider implements IStakingProvider {
 
             const strategy = PlatformFactory.getStrategy(poolAddress);
 
+            if (!strategy) {
+                throw new Error("Strategy not found");
+            }
             // Check if what we stake surpasses min stake
             const minStake = (await strategy.getPoolInfo(poolAddress)).min_stake;
 
@@ -102,6 +105,9 @@ export class StakingProvider implements IStakingProvider {
 
             const strategy = PlatformFactory.getStrategy(poolAddress);
 
+            if (!strategy) {
+                throw new Error("Strategy not found");
+            }
             // Check for staking balance
             const stakedTon = await strategy.getStakedTon(Address.parse(this.walletProvider.getAddress()), poolAddress);
             if(stakedTon <= 0) throw new Error("No TON staked in the provided pool");
@@ -148,6 +154,10 @@ export class StakingProvider implements IStakingProvider {
         try {
             // Call a contract method that queries pool information.
             const strategy = PlatformFactory.getStrategy(poolAddress);
+
+            if (!strategy) {
+                throw new Error("Strategy not found");
+            }
             const info = await strategy.getPoolInfo(poolAddress);
             return info;
         } catch (error: any) {
@@ -230,6 +240,7 @@ export const initStakingProvider = async (
         runtime.getSetting("TON_RPC_URL") || "https://toncenter.com/api/v2/jsonRPC";
 
     const keypair = await mnemonicToPrivateKey(mnemonics, "");
+    // @ts-ignore
 
     const walletProvider = new WalletProvider(keypair, rpcUrl, runtime.cacheManager);
 

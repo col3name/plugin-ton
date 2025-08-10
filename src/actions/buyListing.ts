@@ -7,7 +7,7 @@ import {
   type Memory,
   type State,
   type HandlerCallback,
-  Content, ActionExample,
+  Content, ActionExample, Action, ActionResult,
 } from "@elizaos/core";
   import { Address, internal, SendMode, toNano } from "@ton/ton";
   import { z } from "zod";
@@ -95,6 +95,7 @@ export class BuyListingAction {
       return receipt;
     } catch (error) {
       elizaLogger.error(`Error buying NFT ${nftAddress}: ${error}`);
+      // @ts-ignore
       throw new Error(`Failed to buy NFT: ${error?.message}`);
     }
   }
@@ -111,7 +112,7 @@ export default {
     state: State,
     options: any,
     callback?: HandlerCallback
-  ) => {
+  ): Promise<ActionResult | void | undefined> => {
     elizaLogger.log("Starting BUY_LISTING handler...");
     const params = await buildBuyListingData(runtime, message, state);
 
@@ -122,7 +123,7 @@ export default {
           content: { error: "Invalid buy listing content" },
         });
       }
-      return false;
+      return { success: false, error: "Invalid buy listing content" };
     }
 
     try {
@@ -146,7 +147,7 @@ export default {
         });
       }
     }
-    return true;
+    return { success: true };
   },
   template: buyListingTemplate,
   // eslint-disable-next-line
@@ -163,11 +164,11 @@ export default {
         },
       },
       {
-        user: "{{user1}}",
+        name: "{{user1}}",
         content: {
           text: "Buy transaction sent successfully",
         },
       },
     ]
   ] as ActionExample[][],
-};
+} as Action;

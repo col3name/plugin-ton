@@ -70,7 +70,7 @@ export default {
       //   console.log("callback", callback);
       if (callback) {
         callback({
-          text: priceData,
+          text: priceData.text,
           content: {
             success: true,
             priceData: priceData,
@@ -83,8 +83,10 @@ export default {
       console.error("Error during price fetch:", error);
       if (callback) {
         callback({
+          // @ts-ignore
           text: `Error fetching token price: ${error.message}`,
-          content: { error: error.message },
+          // @ts-ignore
+          content: {error: error.message},
         });
       }
       return false;
@@ -95,16 +97,14 @@ export default {
     _runtime: IAgentRuntime,
     message: Memory
   ): Promise<boolean> => {
-    const content =
-      typeof message.content === "string"
-        ? message.content
-        : message.content?.text;
+    const content = typeof message.content === "string"
+      ? message.content
+      : message.content?.text;
 
     console.log("content", content);
     if (!content) return false;
     //  console.log("inside the token price action");
-    const priceKeywords =
-      /\b(price|market|status|situation|data|stats|insights|update|check)\b/i;
+    const priceKeywords = /\b(price|market|status|situation|data|stats|insights|update|check)\b/i;
     const questionWords = /\b(what'?s|how'?s|give|show|tell|check)\b/i;
     const tokenSymbols = /\b(TON|NOT|NOTCOIN|DDST|DEDUST|DOGS|STON)\b/i;
 
@@ -131,14 +131,14 @@ export default {
         },
       },
       {
-        user: "{{system}}",
+        name: "{{system}}",
         content: {
           text: "📊 Analyzing TON market data...",
           action: "GET_TOKEN_PRICE_TON",
         },
       },
       {
-        user: "{{system}}",
+        name: "{{system}}",
         content: {
           text: "📈 TON Market Update:\n• Current Price: $5.67 (+5.43% 24h)\n• Volume: $1.87B\n• Liquidity: $233M\n• Market Cap: $7.8B",
           metadata: {
@@ -160,14 +160,14 @@ export default {
         },
       },
       {
-        user: "{{system}}",
+        name: "{{system}}",
         content: {
           text: "🔍 Fetching Notcoin stats...",
           action: "GET_TOKEN_PRICE_TON",
         },
       },
       {
-        user: "{{system}}",
+        name: "{{system}}",
         content: {
           text: "NOT Token Status:\nPrice: $0.0003 | 24h: +2.19%\nLiquidity Pool: $15M\nDaily Volume: $1M\nMarket Rank: #892",
           metadata: {
@@ -189,14 +189,14 @@ export default {
         },
       },
       {
-        user: "{{system}}",
+        name: "{{system}}",
         content: {
           text: "⚡ Getting DeDust market insights...",
           action: "GET_TOKEN_PRICE_TON",
         },
       },
       {
-        user: "{{system}}",
+        name: "{{system1}}",
         content: {
           text: "DeDust (DDST)\nTrading at: $1.23\nTrend: -2.5% (24h)\nVolume: $892K\nPool: $4.2M\nHolder Count: 15.2K",
           metadata: {
@@ -210,4 +210,4 @@ export default {
       },
     ],
   ],
-} as Action;
+} as unknown as Action;

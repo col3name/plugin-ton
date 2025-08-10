@@ -7,7 +7,7 @@ import {
   Content,
   composePromptFromState,
   parseKeyValueXml,
-  ModelType as ModelClass, ActionExample,
+  ModelType as ModelClass, ActionExample, Action,
 } from "@elizaos/core";
 import { WalletProvider } from "../providers/wallet";
 import { z } from "zod";
@@ -95,7 +95,7 @@ export default {
   ) => {
       elizaLogger.log("Starting RECOVER_TON_WALLET action...");
 
-      const recoverWalletContent = await buildRecoverWalletDetails(runtime, message, state);
+      const recoverWalletContent: RecoverWalletContent = await buildRecoverWalletDetails(runtime, message, state);
 
       if(!isRecoverWalletContent(recoverWalletContent)) {
           if(callback) {
@@ -104,10 +104,13 @@ export default {
                   content: { error: "Invalid load wallet. No password or address provided." },
               });
           }
-          return false;
+        return {
+          success: false,
+        };
       }
 
       try {
+          // @ts-ignore
           elizaLogger.debug("recoverWalletContent", recoverWalletContent);
           // Get the export password from settings.
           const password = recoverWalletContent.password;
@@ -117,7 +120,9 @@ export default {
                       text: "Unable to process load wallet request. No password provided.",
                       content: { error: "Invalid load wallet. No password provided." },
                   });
-                  return false;
+                return {
+                  success: false,
+                };
               }
           }
           // Get the backup file path. You can pass the filePath via message content or via settings.
@@ -128,7 +133,9 @@ export default {
                       text: "Unable to process load wallet request. No wallet address provided.",
                       content: { error: "Invalid load wallet. No wallet address provided." },
                   });
-                  return false;
+                return {
+                  success: false,
+                };
               }
           }
 
@@ -150,7 +157,9 @@ Please store it securely.`,
               });
           }
 
-          return true;
+        return {
+          success: true,
+        };
       } catch (error: any) {
           elizaLogger.error("Error recovering wallet:", error);
           if (callback) {
@@ -159,7 +168,9 @@ Please store it securely.`,
                   content: { error: error.message },
               });
           }
-          return false;
+          return {
+            success: false,
+          };
       }
   },
   validate: async (_runtime: IAgentRuntime) => true,
@@ -173,11 +184,11 @@ Please store it securely.`,
         },
       },
       {
-        user: "{{user1}}",
+        name: "{{user1}}",
         content: {
           text: "Wallet recovered successfully. Your Decrypted wallet is: ${JSON.stringify(walletProvider.keypair)}. Please store it securely.",
         },
       },
     ],
   ] as ActionExample[][],
-};
+} as Action;

@@ -548,14 +548,14 @@ const borrowAction: Action = {
     },
     examples: [
         [
-            {
-                user: "{{user1}}",
+        {
+            user: "{{user1}}",
                 content: {
                     text: "I want to borrow 1 TON from the EVAA protocol and see the interest calculation",
                 },
             },
             {
-                user: "{{agentName}}",
+                name: "{{agentName}}",
                 content: {
                     text: "I'll help you borrow 1 TON from the EVAA protocol and show you the interest details. Processing your request...",
                     action: "BORROW_TON",
@@ -563,21 +563,21 @@ const borrowAction: Action = {
             },
         ],
         [
-            {
-                user: "{{user1}}",
+        {
+            user: "{{user1}}",
                 content: {
                     text: "Can you get me a loan of 0.5 TON from EVAA with user code included?",
                 },
             },
             {
-                user: "{{agentName}}",
+                name: "{{agentName}}",
                 content: {
                     text: "I'll help you borrow 0.5 TON from EVAA with user code included. Processing your request...",
                     action: "BORROW_TON",
                 },
             },
         ],
-    ] as ActionExample[][],
+    ],
 };
 
 export default borrowAction;

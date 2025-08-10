@@ -7,7 +7,7 @@ import {
     ModelType as ModelClass,
     type IAgentRuntime,
     type Memory,
-    type State, ActionExample,
+    type State, ActionExample, Action,
 } from "@elizaos/core";
 import { z } from "zod";
 import { initStakingProvider, IStakingProvider } from "../providers/staking";
@@ -54,8 +54,9 @@ export class UnstakeAction {
             return await this.stakingProvider.unstake(
                 params.poolId,
                 Number(params.amount)
-            );
+            ) || '';
         } catch (error) {
+            // @ts-ignore
             throw new Error(`Unstaking failed: ${error.message}`);
         }
     }
@@ -118,7 +119,9 @@ export default {
                     content: { error: "Invalid unstake content" },
                 });
             }
-            return false;
+            return {
+                success: false,
+            };
         }
 
         try {
@@ -137,64 +140,70 @@ export default {
                     },
                 });
             }
-            return true;
+            return {
+                success: true,
+            };
         } catch (error) {
-            elizaLogger.error("Error during unstaking:", error);
+            elizaLogger.error("Error during unstaking:", error as any);
             if (callback) {
                 callback({
+                    // @ts-ignore
                     text: `Error unstaking TON: ${error.message}`,
+                    // @ts-ignore
                     content: { error: error.message },
                 });
             }
-            return false;
+            return {
+                success: false,
+            };
         }
     },
     template: unstakeTemplate,
     validate: async (runtime: IAgentRuntime) => true,
     examples: [
         [
-            {
-                user: "{{user1}}",
+        {
+            user: "{{user1}}",
                 content: {
                     text: "Withdraw 1 TON from pool pool123",
                     action: "WITHDRAW_TON",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{user2}}",
                 content: {
                     text: "I'll unstake 1 TON now...",
                     action: "WITHDRAW_TON",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{user2}}",
                 content: {
                     text: "Successfully unstaked 1 TON from pool pool123, Transaction: efgh5678abcd1234",
                 },
             },
         ],
         [
-            {
-                user: "{{user1}}",
+        {
+            user: "{{user1}}",
                 content: {
                     text: "withdraw 12 TON from pool eqw237595asd432",
                     action: "WITHDRAW_TON",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{user2}}",
                 content: {
                     text: "Withdrawing 12 TON right now...",
                     action: "WITHDRAW_TON",
                 },
             },
             {
-                user: "{{user2}}",
+                name: "{{user2}}",
                 content: {
                     text: "Successfully unstaked 12 TON from pool eqw237595asd432, Transaction: efgesdrf234h5678abcd1234",
                 },
             },
         ],
     ] as ActionExample[][],
-};
+} as Action;

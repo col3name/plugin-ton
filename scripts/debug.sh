@@ -55,7 +55,7 @@ export OPENAI_API_KEY='$OPENAI_API_KEY' && export TON_RPC_API_KEY='$TON_RPC_API_
 
 # check the status
 tmux ls
-
+# chest hockey pulp busy repeat sad slush april mule rebel primary consider hundred catch nurse breeze near
 echo '
 - you can check balance and transfer on https://testnet.tonviewer.com/kQDT62Zxkrlj-NG9cODSAfRzuNYrSbrtVVAnjHfK7lvs4Rp1
 - you should get testcoin from https://t.me/testgiver_ton_bot, the address is: `UQDT62Zxkrlj-NG9cODSAfRzuNYrSbrtVVAnjHfK7lvs4fw6`

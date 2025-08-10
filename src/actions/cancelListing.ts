@@ -7,7 +7,7 @@ import {
   type Memory,
   type State,
   type HandlerCallback,
-  Content, ActionExample,
+  Content, ActionExample, ActionResult, Action,
 } from "@elizaos/core";
 import {
   Address,
@@ -98,6 +98,7 @@ export class CancelListingAction {
       return receipt;
     } catch (error) {
       elizaLogger.error(`Error cancelling NFT listing ${nftAddress}: ${error}`);
+      // @ts-ignore
       throw new Error(`Failed to cancel NFT listing: ${error.message}`);
     }
   }
@@ -114,7 +115,7 @@ export default {
     state: State,
     options: any,
     callback?: HandlerCallback
-  ) => {
+  ) : Promise<ActionResult | void | undefined> => {
     elizaLogger.log("Starting CANCEL_LISTING handler...");
     const params = await buildCancelListingData(runtime, message, state);
 
@@ -125,7 +126,7 @@ export default {
           content: { error: "Invalid cancel listing content" },
         });
       }
-      return false;
+      return {success: false, error: "Invalid cancel listing content"};
     }
 
     try {
@@ -149,7 +150,9 @@ export default {
         });
       }
     }
-    return true;
+    return {
+      success: true,
+    };
   },
   template: cancelListingTemplate,
   // eslint-disable-next-line
@@ -166,11 +169,11 @@ export default {
         },
       },
       {
-        user: "{{user1}}",
+        name: "{{user1}}",
         content: {
           text: "Cancel listing transaction sent successfully",
         },
       },
     ],
   ] as ActionExample[][],
-};
+} as Action;
